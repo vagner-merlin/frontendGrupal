@@ -1,6 +1,21 @@
 /* src/styles/grupos.css */
 
 /* ======================
+   VARIABLES LOCALES PARA USO INDEPENDIENTE
+   Estas variables permiten que grupos.css funcione sin importar theme.css
+   Aplica sobre el contenedor .grupos-page-root
+   ====================== */
+.grupos-page-root {
+  --border: rgba(255, 255, 255, 0.06);
+  --success: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --muted: #64748b;
+  --accent: #8b5cf6;
+  --muted-2: rgba(255,255,255,0.03);
+}
+
+/* ======================
    PÁGINA DE GRUPOS
    ====================== */
 

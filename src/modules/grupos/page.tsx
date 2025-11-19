@@ -4,8 +4,8 @@ import { useAuth } from "../auth/service";
 import { listGroups, listPermissions, createGroup, updateGroup, deleteGroup } from "./service";
 import PageHeader from "../../shared/components/PageHeader";
 import type { Group, Permission, CreateGroupInput } from "./types";
-import "../../styles/theme.css";
 import "../../styles/grupos.css";
+// Este componente usa únicamente los estilos de grupos.css.
 
 // Componente de notificación de éxito
 const SuccessNotification: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => {
@@ -314,7 +314,7 @@ const GruposPage: React.FC = () => {
 
   if (!isSuperAdmin && !isCompanyAdmin) {
     return (
-      <section className="page grupos-page">
+      <section className="page grupos-page grupos-page-root">
         <PageHeader
           title="⚠️ Acceso Denegado"
           subtitle="No tienes permisos para gestionar grupos"
@@ -329,7 +329,7 @@ const GruposPage: React.FC = () => {
   }
 
   return (
-    <section className="page grupos-page">
+    <section className="page grupos-page grupos-page-root">
       {/* Notificaciones */}
       {showSuccessNotification && (
         <SuccessNotification 

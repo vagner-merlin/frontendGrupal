@@ -268,6 +268,26 @@ const CompanyRegisterPage: React.FC = () => {
     // El usuario debe llenar estos campos manualmente
   };
 
+  // helper: normaliza slug de empresa y local-part (para admin email)
+  const normalizeEmpresaSlug = (s: string) => (s || "").toLowerCase().trim().replace(/\s+/g, "");
+  const normalizeLocal = (raw: string, fallback = "") =>
+    ((raw || "").split("@")[0] || fallback || "usuario")
+      .toLowerCase()
+      .replace(/[^a-z0-9.]/g, "")
+      .trim();
+
+  // Si cambia el nombre comercial y el admin email está vacío, prellenar admin email con usuario@empresa.com
+  useEffect(() => {
+    const empresa = normalizeEmpresaSlug(form.nombre_comercial);
+    if (!empresa) return;
+    const current = (form.email || "").trim();
+    if (!current) {
+      const local = normalizeLocal(form.first_name || "usuario");
+      setForm(prev => ({ ...prev, email: `${local}@${empresa}.com` }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.nombre_comercial, form.first_name]);
+
   const validateForm = (): string | null => {
     // Validación de emails
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -686,8 +706,17 @@ const CompanyRegisterPage: React.FC = () => {
 
                   <div className="input-group">
                     <span className="input-icon">📧</span>
-                    <input type="email" name="email_contacto" placeholder="Email de contacto *" value={form.email_contacto} onChange={handleChange} required />
-                  </div>
+                  {/* Email de contacto de la empresa - permanece manual */}
+                  <input
+                    type="email"
+                    name="email_contacto"
+                    autoComplete="email"
+                    placeholder="Email de contacto *"
+                    value={form.email_contacto}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
                 </div>
 
                 {/* Columna derecha: Logo de empresa */}
@@ -761,49 +790,47 @@ const CompanyRegisterPage: React.FC = () => {
 
                   <div className="input-group">
                     <span className="input-icon">📧</span>
-                    <input 
-                      type="text" 
-                      name="email" 
-                      placeholder={form.nombre_comercial ? `usuario.${form.nombre_comercial.toLowerCase().trim().replace(/\s+/g, '')}@gmail.com` : "Email del administrador *"}
-                      value={form.email} 
+                    {/* Email del administrador: autocompleta usuario@empresa.com */}
+                    <input
+                      type="text"
+                      name="email"
+                      autoComplete="off"
+                      placeholder={
+                        form.nombre_comercial
+                          ? `${form.first_name || "usuario"}@${normalizeEmpresaSlug(form.nombre_comercial)}.com`
+                          : "Email del administrador *"
+                      }
+                      value={form.email}
                       onChange={(e) => {
-                        const inputValue = e.target.value;
-                        const nombreLimpio = form.nombre_comercial.toLowerCase().trim().replace(/\s+/g, '');
-                        
-                        if (!nombreLimpio) {
-                          // Si no hay nombre comercial, comportamiento normal
-                          setForm(prev => ({ ...prev, email: inputValue }));
+                        const raw = e.target.value || "";
+                        const empresa = normalizeEmpresaSlug(form.nombre_comercial);
+                        // si pega o escribe con @, tomar local y forzar dominio empresa (si existe)
+                        if (raw.includes("@")) {
+                          const local = normalizeLocal(raw, form.first_name || "usuario");
+                          if (empresa) setForm(prev => ({ ...prev, email: `${local}@${empresa}.com` }));
+                          else setForm(prev => ({ ...prev, email: local }));
                           return;
                         }
-                        
-                        const dominioFijo = `.${nombreLimpio}@gmail.com`;
-                        
-                        // Si el usuario intenta borrar o modificar el dominio, mantenerlo fijo
-                        if (inputValue.includes('.')) {
-                          // Extraer solo la parte antes del primer punto
-                          const parteUsuario = inputValue.split('.')[0];
-                          // Siempre mantener el dominio fijo
-                          setForm(prev => ({ ...prev, email: `${parteUsuario}${dominioFijo}` }));
-                        } else {
-                          // Si no hay punto aún, permitir escribir normalmente
-                          setForm(prev => ({ ...prev, email: inputValue }));
-                        }
+                        // mientras escribe local-part, permitir edición (completará en blur)
+                        setForm(prev => ({ ...prev, email: raw }));
                       }}
                       onBlur={(e) => {
-                        // Al perder el foco, si hay algo escrito y nombre comercial, agregar el dominio
-                        const nombreLimpio = form.nombre_comercial.toLowerCase().trim().replace(/\s+/g, '');
-                        if (nombreLimpio && e.target.value && !e.target.value.includes('.')) {
-                          const dominioFijo = `.${nombreLimpio}@gmail.com`;
-                          setForm(prev => ({ ...prev, email: `${e.target.value}${dominioFijo}` }));
-                        }
+                        const empresa = normalizeEmpresaSlug(form.nombre_comercial);
+                        if (!empresa) return;
+                        const local = normalizeLocal(e.target.value, form.first_name || "usuario");
+                        if (local) setForm(prev => ({ ...prev, email: `${local}@${empresa}.com` }));
                       }}
-                      required 
+                      onPaste={(e) => {
+                        const text = (e.clipboardData?.getData?.("text") || "").trim();
+                        if (!text) return;
+                        e.preventDefault();
+                        const empresa = normalizeEmpresaSlug(form.nombre_comercial);
+                        const local = normalizeLocal(text, form.first_name || "usuario");
+                        if (empresa) setForm(prev => ({ ...prev, email: `${local}@${empresa}.com` }));
+                        else setForm(prev => ({ ...prev, email: local }));
+                      }}
+                      required
                     />
-                    {form.nombre_comercial && (
-                      <small style={{ fontSize: "11px", color: "var(--success)", marginTop: "4px", display: "block", fontWeight: "500" }}>
-                        💡 Escribe tu usuario (ej: vagner). Al terminar se agregará automáticamente .{form.nombre_comercial.toLowerCase().trim().replace(/\s+/g, '')}@gmail.com
-                      </small>
-                    )}
                   </div>
 
                   <div className="input-group">

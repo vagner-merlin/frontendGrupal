@@ -70,6 +70,32 @@ export const ConfirmationModal: React.FC<Props> = ({
   const planTitle = selectedPlan?.name ?? "Plan seleccionado";
   const planPrice = selectedPlan?.priceUsd === 0 ? "Gratis 30 días" : `$${selectedPlan?.priceUsd}/mes`;
 
+  // --- nuevo: generar email corporativo a mostrar (siempre) ---
+  const slugify = (s: string = "") =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+  const slugifyLocal = (s: string = "") =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9.]/g, "");
+
+  const adminFirst = (companyData.admin_nombre || "")
+    .trim()
+    .split(/\s+/)[0] || (companyData.admin_email || "").split("@")[0] || "admin";
+
+  const companySlug = (companyData.nombre || "").trim()
+    ? slugify(companyData.nombre)
+    : "empresa";
+
+  const finalAdminEmail = `${slugifyLocal(adminFirst)}@${companySlug}.com`;
+  // ------------------------------------------------------------------
+
   return (
     <div className="confirmation-modal-overlay" role="dialog" aria-modal="true">
       <div className="confirmation-modal-card">
@@ -115,7 +141,8 @@ export const ConfirmationModal: React.FC<Props> = ({
                 <p><strong>Email:</strong> {companyData.email}</p>
                 <p><strong>Teléfono:</strong> {companyData.telefono || "—"}</p>
                 <p><strong>Dirección:</strong> {companyData.direccion || "—"}</p>
-                <p><strong>Administrador:</strong> {companyData.admin_nombre} — {companyData.admin_email}</p>
+                {/* Mostrar siempre el email corporativo derivado: primerNombre@empresa.com */}
+                <p><strong>Administrador:</strong> {companyData.admin_nombre} — {finalAdminEmail} <small>(generado)</small></p>
               </div>
             </div>
 

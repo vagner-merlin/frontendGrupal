@@ -429,3 +429,111 @@ export async function obtenerLineaTiempo(creditoId: number) {
   }
 }
 
+/**
+ * Avanzar fases / acciones del workflow en backend
+ */
+
+export async function agregarDocumentacion(creditoId: number, payload: { ci: string; documento_url: string }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/agregar-documentacion/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload);
+    const res = await http.patch(url, payload);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] agregarDocumentacion error:", err);
+    throw err;
+  }
+}
+
+export async function agregarLaboral(creditoId: number, payload: { cargo: string; empresa_trabajo: string; salario: string; extracto_url?: string }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/agregar-laboral/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload);
+    const res = await http.patch(url, payload);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] agregarLaboral error:", err);
+    throw err;
+  }
+}
+
+export async function agregarDomicilio(creditoId: number, payload: { descripcion: string; croquis_url?: string; es_propietario?: boolean; numero_ref?: string }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/agregar-domicilio/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload);
+    const res = await http.patch(url, payload);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] agregarDomicilio error:", err);
+    throw err;
+  }
+}
+
+export async function agregarGarante(creditoId: number, payload: { nombrecompleto: string; ci: string; telefono?: string }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/agregar-garante/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload);
+    const res = await http.patch(url, payload);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] agregarGarante error:", err);
+    throw err;
+  }
+}
+
+export async function enviarRevision(creditoId: number) {
+  try {
+    const url = `${BASE_URL}${creditoId}/enviar-revision/`;
+    console.log("📤 [CREDITOS] PATCH", url);
+    const res = await http.patch(url, {});
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] enviarRevision error:", err);
+    throw err;
+  }
+}
+
+export async function revisarCredito(creditoId: number, payload: { aprobado: boolean; razon?: string; comentario?: string }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/revisar/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload);
+    const res = await http.patch(url, payload);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] revisarCredito error:", err);
+    throw err;
+  }
+}
+
+export async function desembolsarCredito(creditoId: number, payload?: { fecha_desembolso?: string; monto?: number }) {
+  try {
+    const url = `${BASE_URL}${creditoId}/desembolsar/`;
+    console.log("📤 [CREDITOS] PATCH", url, payload || {});
+    const res = await http.patch(url, payload || {});
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] desembolsarCredito error:", err);
+    throw err;
+  }
+}
+
+/**
+ * Helpers / utilitarios que el frontend puede usar
+ */
+
+export async function buscarCreditosPorCI(ci: string) {
+  try {
+    const url = `${BASE_URL}?ci_cliente=${encodeURIComponent(ci)}`;
+    console.log("📤 [CREDITOS] GET", url);
+    const res = await http.get(url);
+    return res.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] buscarCreditosPorCI error:", err);
+    throw err;
+  }
+}
+
+export async function obtenerHistorial() {
+  return getHistorialCreditos(); // reutiliza la función ya implementada
+}
+

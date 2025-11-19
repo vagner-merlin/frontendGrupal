@@ -20,7 +20,10 @@ const RegistroOnPremise: React.FC = () => {
   const navigate = useNavigate();
 
   const [razonSocial, setRazonSocial] = useState("");
-  const [email, setEmail] = useState("");
+  const [adminNombre, setAdminNombre] = useState(""); // primer nombre del admin
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminEmailEdited, setAdminEmailEdited] = useState(false);
+  const [adminEmailReadonly, setAdminEmailReadonly] = useState<boolean>(true); // evitar autofill del navegador
   const [version, setVersion] = useState("1.0");
   const [fechaEntrega, setFechaEntrega] = useState<string>("");
   const [fechaCompra, setFechaCompra] = useState<string>(formatDateInput(new Date()));
@@ -30,6 +33,31 @@ const RegistroOnPremise: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [showThanks, setShowThanks] = useState(false);
+
+  const slugify = (s?: string) =>
+    s
+      ? s
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+      : "";
+
+  // Generar email automáticamente en cuanto haya razonSocial + adminNombre
+  useEffect(() => {
+    const company = (razonSocial || "").trim();
+    const admin = (adminNombre || "").trim().split(/\s+/)[0] || "";
+    if (!company || !admin) return;
+    const derived = `${slugify(admin)}@${slugify(company)}.com`;
+    // si el usuario NO editó el email o hay autofill personal, sobrescribir
+    const isPersonal = (e: string) => /@(gmail|hotmail|outlook|yahoo|live|icloud)\.com$/i.test(e);
+    if (!adminEmailEdited || !adminEmail || isPersonal(adminEmail)) {
+      setAdminEmail(derived);
+      // permitir edición pero sólo después de haber puesto el valor controlado (pequeño retraso para bloquear autofill)
+      setTimeout(() => setAdminEmailReadonly(false), 80);
+      setAdminEmailEdited(false);
+    }
+  }, [razonSocial, adminNombre]);
 
   useEffect(() => {
     // inicializar fechas si están vacías
@@ -67,7 +95,7 @@ const RegistroOnPremise: React.FC = () => {
       setMessage({ type: "error", text: "La razón social es obligatoria." });
       return false;
     }
-    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
+    if (!adminEmail.trim() || !/^\S+@\S+\.\S+$/.test(adminEmail)) {
       setMessage({ type: "error", text: "Introduce un email válido." });
       return false;
     }
@@ -110,7 +138,7 @@ const RegistroOnPremise: React.FC = () => {
 
     const payload = {
       razon_social: razonSocial.trim(),
-      email_contacto: email.trim(),
+      email_contacto: adminEmail.trim(),
       version,
       fecha_sin_soporte: fechaSinSoporteIso,
     };
@@ -121,7 +149,8 @@ const RegistroOnPremise: React.FC = () => {
       setMessage({ type: "ok", text: "Solicitud enviada." });
       setShowThanks(true);
       setRazonSocial("");
-      setEmail("");
+      setAdminNombre("");
+      setAdminEmail("");
       setVersion("1.0");
       setFechaEntrega("");
       return;
@@ -134,7 +163,8 @@ const RegistroOnPremise: React.FC = () => {
           setMessage({ type: "ok", text: "Solicitud enviada." });
           setShowThanks(true);
           setRazonSocial("");
-          setEmail("");
+          setAdminNombre("");
+          setAdminEmail("");
           setVersion("1.0");
           setFechaEntrega("");
           return;
@@ -147,7 +177,8 @@ const RegistroOnPremise: React.FC = () => {
       setMessage({ type: "ok", text: "Solicitud guardada localmente. Se descargó un respaldo." });
       setShowThanks(true);
       setRazonSocial("");
-      setEmail("");
+      setAdminNombre("");
+      setAdminEmail("");
       setVersion("1.0");
       setFechaEntrega("");
     } finally {
@@ -180,11 +211,27 @@ const RegistroOnPremise: React.FC = () => {
               </label>
 
               <label className="form-field">
+                <span className="field-label">Nombre del administrador</span>
+                <input
+                  type="text"
+                  value={adminNombre}
+                  onChange={(e) => setAdminNombre(e.target.value)}
+                  className="ui-input"
+                  required
+                  placeholder="Primer nombre del administrador"
+                />
+              </label>
+
+              <label className="form-field">
                 <span className="field-label">Email de contacto</span>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name={"admin_email_parent_generated"} // nombre distinto evita match con autofill
+                  autoComplete="off"
+                  value={adminEmail}
+                  readOnly={adminEmailReadonly} // readonly hasta que el componente coloque el email correcto
+                  onFocus={() => { setAdminEmailReadonly(false); /* permitir edición manual al enfocar */ }}
+                  onChange={(e) => { setAdminEmail(e.target.value); setAdminEmailEdited(true); }}
                   className="ui-input"
                   required
                   placeholder="contacto@empresa.com"
@@ -232,7 +279,8 @@ const RegistroOnPremise: React.FC = () => {
                 className="ui-btn ui-btn--ghost"
                 onClick={() => {
                   setRazonSocial("");
-                  setEmail("");
+                  setAdminNombre("");
+                  setAdminEmail("");
                   setVersion("1.0");
                   setFechaEntrega("");
                 }}
