@@ -1,0 +1,1012 @@
+/* ===== VARIABLES PARA DASHBOARD - DISEÑO TRANSPARENTE ===== */
+:root {
+  /* Paleta transparente y minimalista */
+  --dashboard-bg: #0a0f1c;
+  --dashboard-surface: rgba(255, 255, 255, 0.02);
+  --dashboard-card: rgba(255, 255, 255, 0.05);
+  
+  /* Textos mejorados */
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-accent: #cbd5e1;
+  
+  /* Acentos suaves y transparentes */
+  --accent-primary: rgba(255, 255, 255, 0.1);
+  --accent-secondary: rgba(255, 255, 255, 0.15);
+  --accent-tertiary: rgba(255, 255, 255, 0.2);
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-error: #ef4444;
+  
+  /* Bordes transparentes */
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  
+  /* Sombras suaves */
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 32px rgba(255, 255, 255, 0.05);
+}
+
+/* ===== LAYOUT BASE ===== */
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: var(--dashboard-bg);
+  overflow: hidden;
+}
+
+/* Asegurar que body y root tengan overflow hidden SOLO cuando hay dashboard */
+body:has(.dashboard-layout) {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+#root:has(.dashboard-layout) {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+.dashboard-main {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.dashboard-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dashboard-bg);
+  position: relative;
+  margin-left: 280px; /* Espacio para el sidebar */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cuando el sidebar está colapsado */
+.dashboard-main:has(.sidebar--collapsed) .dashboard-content-area {
+  margin-left: 72px;
+}
+
+.dashboard-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--dashboard-bg);
+  padding: 24px 32px 32px 32px;
+  margin-top: 0;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  position: relative;
+}
+
+/* Indicador de más contenido abajo */
+.dashboard-content::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, var(--dashboard-bg) 30%, transparent);
+  pointer-events: none;
+  z-index: 10;
+  display: block;
+}
+
+/* Scrollbar personalizado para el contenido */
+.dashboard-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  margin: 8px 0;
+  border-radius: 10px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
+/* ===== MEJORAS PARA CONTENIDO DE MÓDULOS - MÁS ESPECÍFICO ===== */
+/* Solo aplicamos estilos generales del dashboard a elementos sin estilos específicos */
+.dashboard-content > *:not(.page):not(.card):not(.ui-table-wrap):not(.ui-toolbar) {
+  margin-bottom: 24px;
+}
+
+.dashboard-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Para el primer elemento, añadir margen superior solo si NO tiene clases específicas */
+.dashboard-content > :first-child:not(.system-status):not(.dashboard-welcome):not(.page):not(.ui-page__header) {
+  margin-top: 8px;
+}
+
+/* ===== COMPONENTES ESPECÍFICOS DE DASHBOARD (NO MÓDULOS) ===== */
+/* Solo aplicamos estos estilos a elementos del dashboard, no de módulos */
+
+/* Headers de módulos - MÁS ESPECÍFICO */
+.dashboard-content h1:not(.ui-title),
+.dashboard-content h2:not(.ui-title),
+.dashboard-content h3:not(.ui-title) {
+  margin: 0 0 24px 0;
+  padding: 0;
+}
+
+/* Formularios del dashboard - NO de módulos */
+.dashboard-content form:not(.ui-form) {
+  background: var(--dashboard-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+/* Tablas del dashboard - NO de módulos */
+.dashboard-content table:not(.ui-table) {
+  background: var(--dashboard-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Listas del dashboard */
+.dashboard-content ul:not(.ui-list),
+.dashboard-content ol:not(.ui-list) {
+  margin: 0 0 20px 0;
+  padding-left: 24px;
+}
+
+/* Secciones específicas del dashboard */
+.dashboard-content .stats-section,
+.dashboard-content .chart-section,
+.dashboard-content .data-section {
+  background: var(--dashboard-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 32px;
+  margin: 0 0 24px 0;
+}
+
+/* ===== GRIDS DE CONTENIDO ===== */
+.dashboard-content .content-grid {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.dashboard-content .content-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.dashboard-content .content-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.dashboard-content .content-grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== ESPACIADO PARA ELEMENTOS INLINE ===== */
+.dashboard-content .inline-elements {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.dashboard-content .text-content {
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.dashboard-content .text-content p {
+  margin: 0 0 16px 0;
+}
+
+.dashboard-content .text-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== ESTADO DEL SISTEMA ===== */
+.system-status {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(217, 70, 239, 0.03));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 24px;
+  margin: 0 0 28px 0;
+  padding: 36px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.system-status::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.system-status:hover::before {
+  opacity: 1;
+}
+
+.system-status:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 48px rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(217, 70, 239, 0.05));
+}
+
+.system-status h3 {
+  margin: 0 0 28px 0;
+  color: #e9d5ff;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  letter-spacing: -0.02em;
+}
+
+.system-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  font-size: 14px;
+}
+
+.system-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 28px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.system-status-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(139, 92, 246, 0.8), rgba(217, 70, 239, 0.8));
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.system-status-item:hover::before {
+  transform: scaleY(1);
+}
+
+.system-status-item:hover {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+.system-status-item strong {
+  color: #cbd5e1;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.system-status-value {
+  color: #e9d5ff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* ===== BIENVENIDA REDISEÑADA ===== */
+.dashboard-welcome {
+  position: relative;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(217, 70, 239, 0.05));
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 24px;
+  margin: 0 0 28px 0;
+  padding: 48px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 40px rgba(139, 92, 246, 0.12);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-welcome::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.dashboard-welcome:hover::before {
+  opacity: 1;
+}
+
+.dashboard-welcome:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 64px rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(217, 70, 239, 0.08));
+}
+
+.welcome-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  gap: 40px;
+}
+
+.welcome-text {
+  flex: 1;
+  max-width: 65%;
+}
+
+.welcome-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.welcome-name {
+  color: var(--text-accent);
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.welcome-subtitle {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+  font-weight: 400;
+  text-transform: capitalize;
+  opacity: 0.9;
+}
+
+.welcome-company {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.welcome-company strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.welcome-role {
+  background: var(--dashboard-card);
+  color: var(--text-accent);
+  padding: 6px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border-light);
+}
+
+/* ===== ESTADÍSTICAS MEJORADAS ===== */
+.welcome-stats {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.welcome-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--dashboard-card);
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  box-shadow: var(--shadow-soft);
+}
+
+.welcome-stat:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.stat-icon {
+  font-size: 32px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  border-radius: 14px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* ===== CARDS DE ACCESO RÁPIDO SOLO DEL DASHBOARD ===== */
+.quick-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.quick-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    rgba(139, 92, 246, 0.8), 
+    rgba(217, 70, 239, 0.8), 
+    rgba(251, 113, 133, 0.8)
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quick-card::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.quick-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(139, 92, 246, 0.15), 0 0 80px rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(217, 70, 239, 0.05));
+}
+
+.quick-card:hover::before {
+  transform: scaleX(1);
+}
+
+.quick-card:hover::after {
+  opacity: 1;
+}
+
+.quick-card h4 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.quick-card:hover h4 {
+  color: #e9d5ff;
+}
+
+.quick-card p {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+.quick-card:hover p {
+  color: #cbd5e1;
+}
+
+/* ===== TARJETA ESPECIAL DE PERSONALIZACIÓN ===== */
+.quick-card-special {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(217, 70, 239, 0.08));
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.quick-card-special:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(217, 70, 239, 0.12));
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.quick-card-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background-size: cover;
+  background-position: center;
+}
+
+.quick-card-special:hover .quick-card-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4);
+}
+
+.quick-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-card-text h4 {
+  margin: 0 !important;
+}
+
+.quick-card-text p {
+  margin: 0 !important;
+}
+
+/* ===== RESPONSIVE MEJORADO ===== */
+@media (max-width: 1200px) {
+  .welcome-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  
+  .welcome-text {
+    max-width: 100%;
+  }
+  
+  .welcome-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .system-status-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .dashboard-content {
+    padding: 20px 28px 28px 28px;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* En tablets y móviles, quitar el margen porque el sidebar se oculta */
+  .dashboard-content-area {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome,
+  .system-status {
+    margin: 0 0 20px 0;
+    padding: 28px;
+  }
+  
+  .dashboard-content {
+    padding: 16px 20px 20px 20px;
+  }
+  
+  .welcome-title {
+    font-size: 28px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 16px;
+  }
+  
+  .welcome-stats {
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+  
+  .welcome-stat {
+    width: 100%;
+    justify-content: flex-start;
+    min-width: auto;
+  }
+  
+  .system-status-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .quick-card {
+    padding: 24px;
+  }
+  
+  .dashboard-content .content-grid-2,
+  .dashboard-content .content-grid-3,
+  .dashboard-content .content-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-welcome,
+  .system-status {
+    margin: 16px;
+    padding: 24px;
+  }
+  
+  .dashboard-content {
+    padding: 12px 16px 16px 16px;
+  }
+  
+  .welcome-title {
+    font-size: 24px;
+  }
+  
+  .welcome-subtitle {
+    font-size: 14px;
+  }
+  
+  .welcome-company {
+    font-size: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+  }
+  
+  .stat-number {
+    font-size: 14px;
+  }
+}
+
+/* ===== SCROLLBAR PERSONALIZADA ===== */
+.dashboard-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== MEJORAS PARA SIDEBAR COLAPSADO ===== */
+/* Optimizar el grid cuando hay más espacio disponible (sidebar colapsado) */
+.dashboard-main:has(.sidebar--collapsed) .inicio-grid {
+  /* Cuando el sidebar está colapsado, tenemos ~200px más de espacio */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+@media (min-width: 1600px) {
+  .dashboard-main:has(.sidebar--collapsed) .inicio-grid {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 28px;
+  }
+}
+
+/* ===== ANIMACIONES SUAVES ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Efecto shimmer en las tarjetas */
+.quick-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  transition: transform 0.6s ease;
+}
+
+.quick-card:hover::after {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dashboard-welcome,
+.system-status,
+.quick-card {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.system-status {
+  animation-delay: 0.1s;
+}
+
+.dashboard-welcome {
+  animation-delay: 0.2s;
+}
+
+.quick-card:nth-child(1) { animation-delay: 0.4s; }
+.quick-card:nth-child(2) { animation-delay: 0.5s; }
+.quick-card:nth-child(3) { animation-delay: 0.6s; }
+.quick-card:nth-child(4) { animation-delay: 0.7s; }
+.quick-card:nth-child(5) { animation-delay: 0.8s; }
+.quick-card:nth-child(6) { animation-delay: 0.9s; }
+.quick-card:nth-child(7) { animation-delay: 1s; }
+.quick-card:nth-child(8) { animation-delay: 1.1s; }
+
+/* ===== GRID DEL INICIO - RESPONSIVE ===== */
+.inicio-grid {
+  display: grid;
+  gap: 20px;
+  /* Grid adaptativo según el ancho del contenedor */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  transition: grid-template-columns 0.3s ease;
+}
+
+/* Cuando hay más espacio (sidebar colapsado o pantalla grande) */
+@media (min-width: 1400px) {
+  .inicio-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .inicio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .inicio-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .quick-card {
+    padding: 24px;
+    min-height: 160px;
+  }
+  
+  .quick-card h4 {
+    font-size: 18px;
+  }
+  
+  .quick-card p {
+    font-size: 14px;
+  }
+  
+  .quick-card-special {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
+  
+  .quick-card-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+}
+
+/* ===== ANIMACIÓN FLOAT PARA EMOJI ===== */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ===== EFECTOS DE GLASSMORPHISM ===== */
+.dashboard-welcome::after,
+.system-status::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.welcome-content,
+.system-status h3,
+.system-status-grid,
+.quick-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== UTILIDADES DE ESPACIADO - SOLO PARA ELEMENTOS SIN CLASES ESPECÍFICAS ===== */
+.dashboard-content .mt-0 { margin-top: 0 !important; }
+.dashboard-content .mt-1 { margin-top: 8px !important; }
+.dashboard-content .mt-2 { margin-top: 16px !important; }
+.dashboard-content .mt-3 { margin-top: 24px !important; }
+.dashboard-content .mt-4 { margin-top: 32px !important; }
+
+.dashboard-content .mb-0 { margin-bottom: 0 !important; }
+.dashboard-content .mb-1 { margin-bottom: 8px !important; }
+.dashboard-content .mb-2 { margin-bottom: 16px !important; }
+.dashboard-content .mb-3 { margin-bottom: 24px !important; }
+.dashboard-content .mb-4 { margin-bottom: 32px !important; }
+
+.dashboard-content .p-0 { padding: 0 !important; }
+.dashboard-content .p-1 { padding: 8px !important; }
+.dashboard-content .p-2 { padding: 16px !important; }
+.dashboard-content .p-3 { padding: 24px !important; }
+.dashboard-content .p-4 { padding: 32px !important; }
+
+/* ===== CONTENEDORES ESPECIALES ===== */
+.dashboard-content .full-width {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.dashboard-content .centered-content {
+  max-width: 1200px;
+  margin: 0 auto 24px auto;
+}
+
+.dashboard-content .spaced-section {
+  margin: 40px 0;
+}
+
+.dashboard-content .tight-section {
+  margin: 16px 0;
+}

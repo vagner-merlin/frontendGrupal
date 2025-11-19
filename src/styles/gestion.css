@@ -1,0 +1,188 @@
+/* src/styles/gestion.css */
+
+/* ======================
+   PÁGINA DE GESTIÓN
+   ====================== */
+
+.gestion-page {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ======================
+   QUICK ACTIONS GRID
+   ====================== */
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.action-card {
+  background: var(--card-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border, rgba(139, 92, 246, 0.2));
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none !important;
+  display: block;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-bg, linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.action-card:hover::before {
+  transform: scaleX(1);
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.action-card-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.action-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e9d5ff;
+  margin: 0 0 12px 0;
+}
+
+.action-card-description {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Variantes de color para diferentes tipos de acciones */
+.action-card--blue {
+  --gradient-bg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.action-card--green {
+  --gradient-bg: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.action-card--orange {
+  --gradient-bg: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.action-card--purple {
+  --gradient-bg: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.action-card--red {
+  --gradient-bg: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.action-card--cyan {
+  --gradient-bg: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+}
+
+/* Badge de tipo */
+.action-type-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c4b5fd;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ======================
+   ESTADÍSTICAS
+   ====================== */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #e9d5ff;
+  margin: 0 0 8px 0;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* ======================
+   RESPONSIVE
+   ====================== */
+
+@media (max-width: 768px) {
+  .gestion-page {
+    padding: 16px;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card {
+    padding: 20px;
+  }
+
+  .action-card-icon {
+    font-size: 40px;
+  }
+
+  .action-card-title {
+    font-size: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

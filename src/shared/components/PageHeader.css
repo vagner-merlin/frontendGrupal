@@ -1,0 +1,123 @@
+/* src/shared/components/PageHeader.css */
+
+.page-header {
+  margin-bottom: 32px;
+  animation: fadeInDown 0.5s ease-out;
+}
+
+.page-header__nav {
+  margin-bottom: 16px;
+}
+
+.page-header__back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  color: #e9d5ff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-header__back-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateX(-4px);
+}
+
+.page-header__back-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.page-header__back-btn:hover svg {
+  transform: translateX(-2px);
+}
+
+.page-header__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.page-header__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header__title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e9d5ff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.page-header__subtitle {
+  font-size: 16px;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Animación de entrada */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header__content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header__title {
+    font-size: 24px;
+  }
+
+  .page-header__subtitle {
+    font-size: 14px;
+  }
+
+  .page-header__actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .page-header__back-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .page-header__title {
+    font-size: 20px;
+  }
+}
