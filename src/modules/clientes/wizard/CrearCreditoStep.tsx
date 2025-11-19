@@ -101,8 +101,8 @@ const CrearCreditoStep: React.FC = () => {
         tipo_credito: tipoSeleccionado.id,
         Fecha_Aprobacion: null,
         Fecha_Desembolso: null,
-        Fecha_Finalizacion: null,
-        fase_actual: 'FASE_1_SOLICITUD'
+        Fecha_Finalizacion: null
+        // <-- se elimina `fase_actual` porque no forma parte de CreateCreditoInput
       };
 
       console.log('📤 Creando crédito:', dataParaBackend);

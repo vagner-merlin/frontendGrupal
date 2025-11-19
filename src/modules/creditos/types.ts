@@ -184,19 +184,23 @@ export type Credito = {
 };
 
 export type CreateCreditoInput = {
-  Monto_Solicitado: number;
-  enum_estado: EstadoCredito;
+  // Campos esperados por POST /api/creditos/
+  Monto_Solicitado: number | string;
   Numero_Cuotas: number;
-  Monto_Cuota: number;
+  Tasa_Interes: number | string;
   Moneda: string;
-  Tasa_Interes: number;
-  Monto_Pagar: number;
-  cliente: number;           // ID del cliente (REQUERIDO)
-  tipo_credito: number;      // ID del tipo de crédito (REQUERIDO)
-  Fecha_Aprobacion?: string | null;   // Opcional (auto en backend)
-  Fecha_Desembolso?: string | null;   // Opcional (auto en backend)
-  Fecha_Finalizacion?: string | null; // Opcional (auto en backend)
-  // NOTA: empresa y usuario se asignan automáticamente en el backend
+  tipo_credito: number;
+  // Opcionales / auxiliares
+  enum_estado?: EstadoCredito;
+  cliente?: number;
+  cliente_ci?: string;
+  Fecha_Aprobacion?: string | null;
+  Fecha_Desembolso?: string | null;
+  Fecha_Finalizacion?: string | null;
+  datos_adicionales?: Record<string, unknown>;
+  // Añadidos para evitar error de propiedades no conocidas
+  Monto_Cuota?: number;
+  Monto_Pagar?: number;
 };
 
 // HU18 - Tipos para Flujo de Créditos

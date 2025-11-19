@@ -8,6 +8,7 @@ import PageHeader from "../../shared/components/PageHeader";
 
 import UserHistory from "./components/UserHistory";
 import DeactivateModal from "./components/DeactivateModal";
+import UserEditModal from "./components/UserEditModal";
 
 /* Helpers y componentes (StatusBadge, Toolbar, TableHead, Row, Pager) */
 /* ===== Helpers de fecha coherente ===== */
@@ -229,6 +230,7 @@ const Pager: React.FC<{
 
 const UsersPage: React.FC = () => {
   const navigate = useNavigate(); // Añadir hook useNavigate
+  const [editUser, setEditUser] = useState<User | null>(null);
   const [rows, setRows] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -551,10 +553,7 @@ const UsersPage: React.FC = () => {
                   busyId={busyId}
                   canToggle={(u) => canEditUser(u)}
                   isSelf={isSelf}
-                  onEdit={canEditUser(u) ? () => {
-                    console.log('🚀 Navegando a editar usuario:', u.id);
-                    navigate(`/app/usuarios/editar/${u.id}`);
-                  } : undefined}
+                  onEdit={canEditUser(u) ? () => setEditUser(u) : undefined}
                   onHistory={canEditUser(u) ? (id) => setHistoryUserId(id) : undefined}
                 />
               ))}
@@ -569,6 +568,18 @@ const UsersPage: React.FC = () => {
 
       {/* Modal de Historial */}
       {historyUserId && <UserHistory userId={historyUserId} onClose={() => setHistoryUserId(null)} />}
+
+      {/* Modal de Edición (abre al hacer click en "Editor" de una fila) */}
+      {editUser && (
+        <UserEditModal
+          user={editUser}
+          onClose={() => setEditUser(null)}
+          onSaved={() => {
+            setEditUser(null);
+            void fetchData();
+          }}
+        />
+      )}
       
       {/* Modal de Confirmación para Activar/Desactivar */}
       {deactivateUser && (

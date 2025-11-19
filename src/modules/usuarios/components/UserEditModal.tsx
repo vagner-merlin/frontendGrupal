@@ -14,6 +14,7 @@ type Props = {
 export default function UserEditModal({ user, onClose, onSaved }: Props): ReactElement | null {
   const [form, setForm] = useState({
     nombre: "",
+    username: "",
     email: "",
     telefono: "",
     role: "usuario" as User["role"]
@@ -27,6 +28,7 @@ export default function UserEditModal({ user, onClose, onSaved }: Props): ReactE
     if (user) {
       setForm({
         nombre: user.nombre ?? "",
+        username: (user.username as string) ?? "",
         email: user.email ?? "",
         telefono: user.telefono ?? "",
         role: user.role ?? "usuario"
@@ -63,6 +65,7 @@ export default function UserEditModal({ user, onClose, onSaved }: Props): ReactE
     try {
       const updatePayload: UpdateUserPayload = {
         nombre: form.nombre,
+        username: form.username, // << ahora incluido
         email: form.email,
         telefono: form.telefono,
         role: form.role
@@ -121,6 +124,22 @@ export default function UserEditModal({ user, onClose, onSaved }: Props): ReactE
               </div>
               <div className="ui-form__field">
                 <label className="ui-label">
+                  <span className="label-icon">👤</span>
+                  Nombre de Usuario
+                </label>
+                <input 
+                  className="ui-input" 
+                  value={form.username} 
+                  onChange={(e) => setForm(s => ({ ...s, username: e.target.value }))}
+                  required
+                  placeholder="Ej: juanperez"
+                />
+              </div>
+            </div>
+
+            <div className="ui-form__row">
+              <div className="ui-form__field">
+                <label className="ui-label">
                   <span className="label-icon">📧</span>
                   Email
                 </label>
@@ -133,9 +152,6 @@ export default function UserEditModal({ user, onClose, onSaved }: Props): ReactE
                   placeholder="usuario@ejemplo.com"
                 />
               </div>
-            </div>
-
-            <div className="ui-form__row">
               <div className="ui-form__field">
                 <label className="ui-label">
                   <span className="label-icon">📱</span>
@@ -148,6 +164,9 @@ export default function UserEditModal({ user, onClose, onSaved }: Props): ReactE
                   placeholder="Ej: +591 70123456"
                 />
               </div>
+            </div>
+
+            <div className="ui-form__row">
               <div className="ui-form__field">
                 <label className="ui-label">
                   <span className="label-icon">🔐</span>

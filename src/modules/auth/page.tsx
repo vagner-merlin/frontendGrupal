@@ -316,6 +316,8 @@ export type AuthUser = {
   // Roles y permisos
   roles?: (string | GlobalRole)[];
   org_roles?: OrgRolesMap;
+  // Grupos devueltos por /api/User/me/ — usados para filtrar menú por group id/nombre
+  grupos?: Array<{ id: number | string; nombre?: string | null; descripcion?: string | null }>;
   
   // Empresa asociada (null para superadmin, requerido para admin de empresa)
   empresa_id?: number | string | null;

@@ -1,57 +1,83 @@
-// src/main.tsx
+/* -------------------- Librerías externas -------------------- */
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
-
-import { AuthProvider, useAuth } from "./modules/auth/service";
-import DashboardLayout from "./modules/dashboard/dashboard";
-import { RequireAuth } from "./shared/api/guards";
-
-// Pages - Landing y Auth
-import LandingPage from "./modules/landing/landing_page";
-import AuthPage from "./modules/auth/page";
-import CompanySignupPage from "./modules/landing/company_register";
-
-// Pages - Dashboard Protected
-import UsersPage from "./modules/usuarios/page";
-import CrearUsuarioPage from "./modules/usuarios/crear_usuario";
-import EditarUsuarioPage from "./modules/usuarios/editar_usuario";
-import GestionUsuariosRoles from "./modules/usuarios/gestion_usuarios_roles"; // ← Solo esta
-import GruposPage from "./modules/grupos/page";
-import CreditsPage from "./modules/creditos/page";
-import PagosPage from "./modules/pagos/page";
-import EmpresaPage from "./modules/empresa/page";
-import ClientesPage from "./modules/clientes/page";
-import HistorialClientesPage from "./modules/clientes/historial";
-import CrearClientePage from "./modules/clientes/crear_cliente";
-import VerClientePage from "./modules/clientes/ver_cliente";
-import EditarClientePage from "./modules/clientes/editar_cliente";
-
-// Pages - Billing
-import RegistroOnPremise from "./modules/billing/registro_onpremise";
-import SubscriptionPage from "./modules/billing/suscripcion_page";
-
-// Pages - Reports y Auditoria
-import HistorialAuditoriaPage from "./modules/auditoria/historial";
-import ReportesPage from "./modules/reportes/reportes";
-import HistorialActividadesPage from "./modules/actividades";
-import PersonalizacionPage from "./modules/personalizacion/personalizacion";
-import CambiarFotosPage from "./modules/personalizacion/cambiar_fotos";
-import BackupPage from "./modules/backup/backup";
-import DashboardIngresos from "./modules/ingresos/dashboard";
 import { Link } from "react-router-dom";
+
+/* -------------------- Estilos globales -------------------- */
 import "./styles/theme.css";
 import "./shared/layout/topbar.css";
-import TiposCreditoPage from "./modules/creditos/tipos/page";
+
+/* -------------------- Auth / Provider / Guards -------------------- */
+/* src/modules/auth/service.ts */
+import { AuthProvider, useAuth } from "./modules/auth/service";
+/* src/shared/api/guards.tsx */
+import { RequireAuth } from "./shared/api/guards";
+
+/* -------------------- Layout principal -------------------- */
+/* src/modules/dashboard/dashboard.tsx */
+import DashboardLayout from "./modules/dashboard/dashboard";
+
+/* -------------------- Landing / Auth pages -------------------- */
+/* src/modules/landing/landing_page.tsx */
+import LandingPage from "./modules/landing/landing_page";
+/* src/modules/auth/page.tsx */
+import AuthPage from "./modules/auth/page";
+/* src/modules/landing/company_register.tsx */
+import CompanySignupPage from "./modules/landing/company_register";
+
+/* -------------------- Módulos del Dashboard (páginas) -------------------- */
+/* Usuarios */
+import UsersPage from "./modules/usuarios/page";
+import CrearUsuario from "./modules/usuarios/crear_usuario";
+import GestionUsuariosRoles from "./modules/usuarios/gestion_usuarios_roles";
+import EditarUsuario from "./modules/usuarios/editar_usuario";
+
+/* Grupos */
+import GruposPage from "./modules/grupos/page";
+
+/* Créditos */
+import CreditsPage from "./modules/creditos/page";
+/* Tipos / crear / historial / visor */
+import TiposCreditoPage from "./modules/creditos/tipos/tipos_creditos";
 import CrearCreditoPage from "./modules/creditos/crear_creditos";
 import HistorialCreditosPage from "./modules/creditos/historial";
 import HistorialCompletoPage from "./modules/creditos/historial_completo";
 import ConsultaEstadoPage from "./modules/creditos/consulta_estado";
-import { PagoExitoso } from "./modules/pagos/components/PagoExitoso";
-import { PagoCancelado } from "./modules/pagos/components/PagoCancelado";
-import ClienteWizard from "./modules/clientes/wizard/ClienteWizard";
 import CreditoWorkflowVisor from "./modules/creditos/components/CreditoWorkflowVisor";
 
+/* Pagos */
+import PagosPage from "./modules/pagos/page";
+import { PagoExitoso } from "./modules/pagos/components/PagoExitoso";
+import { PagoCancelado } from "./modules/pagos/components/PagoCancelado";
+
+/* Empresa / Personalización / Backup / Ingresos */
+import EmpresaPage from "./modules/empresa/page";
+import PersonalizacionPage from "./modules/personalizacion/personalizacion";
+import CambiarFotosPage from "./modules/personalizacion/cambiar_fotos";
+import BackupPage from "./modules/backup/backup";
+import DashboardIngresos from "./modules/ingresos/dashboard";
+
+/* Clientes (módulo) */
+import ClientesPage from "./modules/clientes/page";
+/* vistas dentro de clientes */
+import HistorialClientesPage from "./modules/clientes/historial";
+import CrearClientePage from "./modules/clientes/crear_cliente";
+import ClienteWizard from "./modules/clientes/wizard/ClienteWizard";
+import VerClientePage from "./modules/clientes/ver_cliente";
+import EditarClientePage from "./modules/clientes/editar_cliente";
+import PanelAdmin from "./modules/panel_administrativo/panel_admin";
+
+/* Billing / Subscription */
+import RegistroOnPremise from "./modules/billing/registro_onpremise";
+import SubscriptionPage from "./modules/billing/suscripcion_page";
+
+/* Reportes / Auditoría / Actividades */
+import HistorialAuditoriaPage from "./modules/auditoria/historial";
+import ReportesPage from "./modules/reportes/reportes";
+import HistorialActividadesPage from "./modules/actividades";
+
+/* -------------------- Router -------------------- */
 /* RequireRole: componente compacto para proteger rutas por rol */
 type RequireRoleProps = {
   children: React.ReactElement;
@@ -67,7 +93,7 @@ const RequireRole: React.FC<RequireRoleProps> = ({ children, roles, redirectTo =
   return allowed ? children : <Navigate to={redirectTo} replace />;
 };
 
-// Componente de inicio mejorado
+/* Componente de inicio mejorado */
 export function Inicio() {
   const { user } = useAuth();
 
@@ -211,9 +237,13 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Inicio /> },
+      // Panel administrativo (ruta interna que abre vista con enlace al Django Admin)
+      { path: "panel-admin", element: <RequireRole roles={["admin", "superadmin"]}><PanelAdmin /></RequireRole> },
       { path: "empresas", element: <EmpresaPage /> },
-      { path: "usuarios", element: <UsersPage /> },
-      { path: "crear-usuario", element: <CrearUsuarioPage /> },
+      { path: "usuarios", element: <RequireRole roles={["admin","superadmin"]}><UsersPage /></RequireRole> },
+      { path: "usuarios/crear", element: <RequireRole roles={["admin","superadmin"]}><CrearUsuario /></RequireRole> },
+      { path: "usuarios/roles", element: <RequireRole roles={["admin","superadmin"]}><GestionUsuariosRoles /></RequireRole> },
+      { path: "usuarios/:id/editar", element: <RequireRole roles={["admin","superadmin"]}><EditarUsuario /></RequireRole> },
       { 
         path: "clientes", 
         element: <ClientesPage />, 
@@ -226,12 +256,8 @@ const router = createBrowserRouter([
         ] 
       },
       { path: "gestion-usuarios", element: <GestionUsuariosRoles /> },
-      { 
-        path: "usuarios",
-        children: [
-          { path: "editar/:id", element: <EditarUsuarioPage /> },
-        ]
-      },
+      // Nota: la ruta de edición de usuarios ya está registrada más arriba como:
+      // { path: "usuarios/:id/editar", element: <RequireRole roles={["admin","superadmin"]}><EditarUsuario /></RequireRole> }
       { path: "grupos", element: <GruposPage /> },
       { path: "actividades", element: <HistorialActividadesPage /> },
       { path: "auditoria", element: <HistorialAuditoriaPage /> },

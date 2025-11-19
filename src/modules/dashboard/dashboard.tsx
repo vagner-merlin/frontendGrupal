@@ -20,6 +20,7 @@ interface ExtendedUser {
     razon_social?: string;
     imagen_url_empresa?: string;
   };
+  grupos?: Array<{ id: number | string; nombre?: string | null }>;
 }
 
 export default function DashboardLayout() {
@@ -41,7 +42,25 @@ export default function DashboardLayout() {
                        extendedUser?.empresa?.razon_social || 
                        "tu empresa";
 
-    const userRole = user?.roles?.[0] || 'usuario';
+    // Determinar etiqueta de rol a mostrar:
+    const getRoleLabel = (): string => {
+      // Priorizar roles administrativos
+      if (user?.roles?.includes("superadmin")) return "Superadmin";
+      if (user?.roles?.includes("admin")) return "Administrador";
+
+      // Si hay grupos (vienen de /api/User/me/), mostrar sus nombres
+      const grupos = extendedUser?.grupos ?? [];
+      if (Array.isArray(grupos) && grupos.length > 0) {
+        const names = grupos.map(g => (g?.nombre ?? "").trim()).filter(Boolean);
+        if (names.length > 0) return names.join(", ");
+      }
+
+      // Fallback a primer role o etiqueta genérica
+      if (user?.roles && user.roles.length > 0) return String(user.roles[0]);
+      return "Usuario";
+    };
+
+    const userRole = getRoleLabel();
 
     // Obtener saludo según la hora
     const now = new Date();
@@ -70,6 +89,9 @@ export default function DashboardLayout() {
       currentTime: `${greeting}, hoy es ${currentTime}`
     };
   }, [user]); // Solo recalcular si el usuario cambia
+
+  // Grupos del usuario (si vienen de /api/User/me/)
+  const grupos = (user as ExtendedUser).grupos ?? [];
 
   return (
     <div className="dashboard-layout">
@@ -134,6 +156,14 @@ export default function DashboardLayout() {
                       Panel de administración de <strong>{welcomeData.companyName}</strong> · 
                       <span className="welcome-role"> {welcomeData.userRole}</span>
                     </p>
+
+                    {/* Mostrar grupo(s) del usuario si existen */}
+                    {grupos.length > 0 && (
+                      <p className="welcome-group" style={{ marginTop: 6, color: 'var(--muted-text)' }}>
+                        Grupo: <strong>{grupos.map(g => (g?.nombre ?? '').trim()).filter(Boolean).join(', ')}</strong>
+                      </p>
+                    )}
+                    
                   </div>
                   <div className="welcome-stats">
                     <div className="welcome-stat">

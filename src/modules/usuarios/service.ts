@@ -10,6 +10,7 @@ import type {
   CreateUserResponse,
   UpdateUserPayload,
 } from "./types";
+import { isAxiosError } from "axios";
 
 const BASE_URL = "/api/User/user/";
 const CREATE_URL = "/api/User/create-user/";
@@ -107,7 +108,7 @@ export async function updateUser(id: number | string, userData: UpdateUserPayloa
     if (userData.email) payload.email = userData.email;
     if (userData.telefono) payload.telefono = userData.telefono;
     if (userData.role) payload.role = userData.role;
-    
+
     // Si viene 'nombre' completo, dividir en first_name y last_name
     if (userData.nombre) {
       const nombreParts = userData.nombre.trim().split(' ');
@@ -117,15 +118,52 @@ export async function updateUser(id: number | string, userData: UpdateUserPayloa
       if (userData.first_name) payload.first_name = userData.first_name;
       if (userData.last_name) payload.last_name = userData.last_name;
     }
-    
-    if (userData.groups) payload.groups = userData.groups;
+
+    // Normalizar groups: aceptar [1,2] o [{id:1},{id:2}] y enviar [1,2]
+    if (userData.groups) {
+      const raw = userData.groups;
+      if (Array.isArray(raw)) {
+        const ids = raw
+          .map((g) => {
+            if (typeof g === "number") return g;
+            if (typeof g === "string") return Number(g);
+            // objeto { id: number | string }
+            const maybeId = (g as { id?: number | string })?.id;
+            return typeof maybeId === "number" ? maybeId : Number(maybeId);
+          })
+          .map(Number)
+          .filter((n) => !Number.isNaN(n));
+        if (ids.length > 0) payload.groups = ids;
+      } else if (typeof raw === "number") {
+        payload.groups = [raw];
+      } else if (typeof raw === "string") {
+        const n = Number(raw);
+        if (!Number.isNaN(n)) payload.groups = [n];
+      }
+    }
+
     if (userData.user_permissions) payload.user_permissions = userData.user_permissions;
-    
+
+    // Log payload para depuración
+    console.debug("[users] updateUser payload for id", id, payload);
+
     const { data } = await http.put<UserDTO>(`${BASE_URL}${id}/`, payload);
     console.log("✅ Usuario actualizado:", data);
     return data;
   } catch (error) {
     console.error(`❌ Error actualizando usuario ${id}:`, error);
+    if (isAxiosError(error)) {
+      const resp = error.response?.data;
+      console.error("[users] Backend validation error response:", resp);
+      // Intentar extraer mensaje legible
+      const humanMsg =
+        resp?.non_field_errors?.[0] ||
+        resp?.detail ||
+        resp?.message ||
+        (resp?.errors && JSON.stringify(resp.errors)) ||
+        JSON.stringify(resp);
+      throw new Error(String(humanMsg));
+    }
     throw error;
   }
 }

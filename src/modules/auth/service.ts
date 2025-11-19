@@ -299,21 +299,32 @@ export async function apiLogin(payload: LoginInput): Promise<AuthResponse> {
     
     // Mapea a AuthUser usando mapUser (reutiliza lógica existente)
     const mappedUser = mapUser(userDto);
-    
-    // Si backend envía un role explícito en la raíz, respetarlo y añadir roles en el mapeo
-    const explicitRole = getString(rawUserObj, "role") ?? getString(resp, "role");
-    if (explicitRole === "superadmin" && !mappedUser.roles?.includes("superadmin")) {
-      mappedUser.roles = [...(mappedUser.roles ?? []), "superadmin"];
-    } else if (explicitRole === "company_admin" && !mappedUser.roles?.includes("admin")) {
-      mappedUser.roles = [...(mappedUser.roles ?? []), "admin"];
-    }
-    
-    // Persistir sesión si hay token
+
+    // Leer token del response antes de cualquier uso
     const tokenVal = getString(resp, "token") ?? undefined;
+ 
+    // Intentar obtener grupos desde /api/User/me/ (no rompe si falla)
+    try {
+      const me = await apiGetUserMe();
+      if (me && Array.isArray(me.grupos) && me.grupos.length > 0) {
+        // Asegurar formato en mappedUser sin usar `any`
+        type GrupoLite = { id: number | string; nombre?: string | null; descripcion?: string | null };
+        const casted = mappedUser as AuthUser & { grupos?: GrupoLite[] };
+        casted.grupos = me.grupos.map((g) => ({
+          id: g.id,
+          nombre: g.nombre ?? null,
+          descripcion: (g as { descripcion?: string | null }).descripcion ?? null,
+        }));
+      }
+    } catch (e) {
+      console.warn("[AUTH] No se pudieron obtener grupos desde /api/User/me/:", e);
+    }
+ 
+    // Persistir sesión si hay token
     if (tokenVal) {
       await persistSession(tokenVal, mappedUser);
     }
-    
+ 
     return {
       success: true,
       message: getString(resp, "message") ?? "OK",
@@ -556,29 +567,51 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           console.log("[AuthProvider] Usuario parseado:", parsedUser);
           setUser(parsedUser);
           console.log("[AuthProvider] ✅ Usuario restaurado correctamente");
-          
-          // Cargar configuración de la empresa
-          if (parsedUser.empresa_id) {
+
+          // Enriquecer con /api/User/me/ para obtener grupos si no vienen en savedUser
+          (async () => {
             try {
-              const { cargarYAplicarConfiguracionEmpresa } = await import("../personalizacion/service");
-              const empresaId = typeof parsedUser.empresa_id === "string" ? parseInt(parsedUser.empresa_id) : parsedUser.empresa_id;
-              await cargarYAplicarConfiguracionEmpresa(empresaId);
-              console.log("[AuthProvider] ✅ Configuración de empresa restaurada");
-            } catch (error) {
-              console.warn("[AuthProvider] ⚠️ No se pudo cargar configuración:", error);
+              // Solo intentar si no tenemos grupos en el user guardado
+              if (!parsedUser.grupos || parsedUser.grupos.length === 0) {
+                const me = await apiGetUserMe();
+                if (me && Array.isArray(me.grupos) && me.grupos.length > 0) {
+                  const enriched = { ...parsedUser, grupos: me.grupos.map(g => ({ id: g.id, nombre: g.nombre ?? null, descripcion: (g).descripcion ?? null })) };
+                  setUser(enriched);
+                  localStorage.setItem("auth.me", JSON.stringify(enriched));
+                  console.log("[AuthProvider] ✅ Usuario enriquecido con grupos:", enriched.grupos);
+                } else {
+                  console.log("[AuthProvider] No se encontraron grupos en /api/User/me/");
+                }
+              } else {
+                console.log("[AuthProvider] Usuario ya tiene grupos en localStorage");
+              }
+            } catch (err) {
+              console.warn("[AuthProvider] Error al enriquecer usuario con apiGetUserMe():", err);
             }
+          })();
+        
+        // Cargar configuración de la empresa
+        if (parsedUser.empresa_id) {
+          try {
+            const { cargarYAplicarConfiguracionEmpresa } = await import("../personalizacion/service");
+            const empresaId = typeof parsedUser.empresa_id === "string" ? parseInt(parsedUser.empresa_id) : parsedUser.empresa_id;
+            await cargarYAplicarConfiguracionEmpresa(empresaId);
+            console.log("[AuthProvider] ✅ Configuración de empresa restaurada");
+          } catch (error) {
+            console.warn("[AuthProvider] ⚠️ No se pudo cargar configuración:", error);
           }
-        } else {
-          console.log("[AuthProvider] ⚠️ No hay sesión guardada");
         }
-      } catch (e) {
-        console.error("[AuthProvider] ❌ Error al restaurar sesión:", e);
-        clearSession();
-        setUser(null);
-      } finally {
-        setLoading(false);
-        console.log("[AuthProvider] Loading = false");
+      } else {
+        console.log("[AuthProvider] ⚠️ No hay sesión guardada");
       }
+    } catch (e) {
+      console.error("[AuthProvider] ❌ Error al restaurar sesión:", e);
+      clearSession();
+      setUser(null);
+    } finally {
+      setLoading(false);
+      console.log("[AuthProvider] Loading = false");
+    }
     };
     
     restaurarSesion();
@@ -648,18 +681,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       login: (email: string, password: string) => login({ email, password }),
       logout,
       register: (payload: RegisterInput) => register(payload),
-      registerCompanyAndUser: (payload: {
-        razon_social: string;
-        email_contacto: string;
-        nombre_comercial: string;
-        imagen_url_empresa: string;
-        username: string;
-        password: string;
-        first_name: string;
-        last_name: string;
-        email: string;
-        imagen_url_perfil: string;
-      }) => registerCompanyAndUser(payload),
+      // Aceptar payload tipo CompanyRegisterPayload o FormData (coincide con AuthCtx)
+      registerCompanyAndUser: (payload: CompanyRegisterPayload | FormData) =>
+        registerCompanyAndUser(payload as unknown as CompanyRegisterPayload),
       isSuperAdmin: () => !!user?.roles?.includes("superadmin"),
       isCompanyAdmin: () => !!user?.roles?.includes("admin") && !!user?.empresa_id,
       canAccessAllCompanies: () => !!user?.roles?.includes("superadmin") || !!user?.permissions?.includes("*"),
@@ -682,4 +706,20 @@ export function useAuth(): AuthCtx {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+/** Obtener perfil completo desde /api/User/me/ (incluye grupos con id/nombre) */
+export async function apiGetUserMe(): Promise<{
+  id?: number | string;
+  username?: string;
+  email?: string;
+  grupos?: Array<{ id: number | string; nombre?: string; descripcion?: string | null }>;
+} | null> {
+  try {
+    const { data } = await http.get("/api/User/me/");
+    return data ?? null;
+  } catch (err) {
+    console.warn("[AUTH] apiGetUserMe falló, fallback:", err);
+    return null;
+  }
 }

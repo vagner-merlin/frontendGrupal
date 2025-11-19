@@ -12,7 +12,7 @@ interface TopbarProps {
 
 // Tipos extendidos para evitar usar 'any'
 interface ExtendedUser {
-  id?: number;
+  id?: number | string; // allow string coming from backend/localStorage
   username?: string;
   roles?: string[];
   permissions?: string[];
@@ -25,70 +25,91 @@ interface ExtendedUser {
   };
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ 
-  pageTitle, 
-  showSearch = false, 
-  showNotifications = true 
+/**
+ * Tipo mínimo de empresa que esperamos del servicio, evita usar `any`
+ */
+interface EmpresaMinimal {
+  Imagen_url?: string;
+  imagen_url?: string;
+  nombre_comercial?: string;
+  razon_social?: string;
+}
+
+export const Topbar: React.FC<TopbarProps> = ({
+  pageTitle,
+  showSearch = false,
+  showNotifications = true,
 }) => {
   const { user } = useAuth();
   const location = useLocation();
-  
+
   // Estados para datos de empresa
   const [companyData, setCompanyData] = useState({
     name: '',
     logo: '',
-    subtitle: 'Dashboard'
+    subtitle: 'Dashboard',
   });
 
   useEffect(() => {
     // Cargar datos de empresa desde la API
     const extendedUser = user as ExtendedUser;
-    const empresaId = user?.empresa_id;
-    
-    if (empresaId) {
-      // Cargar datos reales desde la API
-      getEmpresaById(empresaId)
+    const empresaIdRaw = user?.empresa_id;
+
+    // Normalizar empresaId a number si es posible
+    let empresaIdNum: number | null = null;
+    if (empresaIdRaw !== undefined && empresaIdRaw !== null) {
+      empresaIdNum =
+        typeof empresaIdRaw === 'string' ? parseInt(empresaIdRaw, 10) : Number(empresaIdRaw);
+      if (Number.isNaN(empresaIdNum)) empresaIdNum = null;
+    }
+
+    if (empresaIdNum != null) {
+      // Llamar al servicio solo con number
+      getEmpresaById(empresaIdNum)
         .then((empresa) => {
           if (empresa) {
-            console.log("[Topbar] Empresa cargada:", empresa);
-            // Manejar ambos formatos: Imagen_url (backend) e imagen_url
-            const logoUrl = (empresa as any).Imagen_url || (empresa as any).imagen_url || "";
-            console.log("[Topbar] Logo URL:", logoUrl);
+            console.log('[Topbar] Empresa cargada:', empresa);
+            // Manejar ambos formatos sin usar `any`
+            const emp = empresa as EmpresaMinimal;
+            const logoUrl = emp.Imagen_url || emp.imagen_url || '';
+            console.log('[Topbar] Logo URL:', logoUrl);
             setCompanyData({
-              name: empresa.nombre_comercial || empresa.razon_social,
+              name: emp.nombre_comercial || emp.razon_social || 'Mi Empresa',
               logo: logoUrl,
-              subtitle: getSubtitleFromPath(location.pathname)
+              subtitle: getSubtitleFromPath(location.pathname),
             });
           } else {
             // Fallback si la API falla
-            useFallbackCompanyData();
+            fallbackCompanyData();
           }
         })
         .catch((err) => {
-          console.error("[Topbar] Error al cargar empresa:", err);
-          useFallbackCompanyData();
+          console.error('[Topbar] Error al cargar empresa:', err);
+          fallbackCompanyData();
         });
     } else {
-      // Si no hay empresa_id, usar fallback
-      useFallbackCompanyData();
+      // Si no hay empresa_id válido, usar fallback
+      fallbackCompanyData();
     }
-    
-    function useFallbackCompanyData() {
-      const companyName = localStorage.getItem("ui.company.name") || 
-                         localStorage.getItem("ui.companyName") || 
-                         extendedUser?.empresa?.razon_social || 
-                         "Mi Empresa";
-      
-      const companyLogo = localStorage.getItem("ui.company.logo") || 
-                         extendedUser?.empresa?.imagen_url_empresa || 
-                         "";
-      
+
+    // no es un hook, sólo helper local — evitar prefijo `use` para no disparar reglas de hooks
+    function fallbackCompanyData() {
+      const companyName =
+        localStorage.getItem('ui.company.name') ||
+        localStorage.getItem('ui.companyName') ||
+        extendedUser?.empresa?.razon_social ||
+        'Mi Empresa';
+
+      const companyLogo =
+        localStorage.getItem('ui.company.logo') || extendedUser?.empresa?.imagen_url_empresa || '';
+
       setCompanyData({
         name: companyName,
         logo: companyLogo,
-        subtitle: getSubtitleFromPath(location.pathname)
+        subtitle: getSubtitleFromPath(location.pathname),
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, location.pathname]);
 
   const getSubtitleFromPath = (pathname: string): string => {
@@ -103,15 +124,15 @@ export const Topbar: React.FC<TopbarProps> = ({
       '/app/personalizacion': 'Personalización',
       '/app/auditoria': 'Auditoría del Sistema',
       '/app/actividades': 'Historial de Actividades',
-      '/app/backup': 'Respaldo de Datos'
+      '/app/backup': 'Respaldo de Datos',
     };
-    
+
     return pathMap[pathname] || 'Sistema de Gestión';
   };
 
   const getCurrentPageTitle = (): string => {
     if (pageTitle) return pageTitle;
-    
+
     const pathTitles: Record<string, string> = {
       '/app': 'Dashboard',
       '/app/usuarios': 'Usuarios',
@@ -123,9 +144,9 @@ export const Topbar: React.FC<TopbarProps> = ({
       '/app/personalizacion': 'Personalización',
       '/app/auditoria': 'Auditoría',
       '/app/actividades': 'Actividades',
-      '/app/backup': 'Backup'
+      '/app/backup': 'Backup',
     };
-    
+
     return pathTitles[location.pathname] || 'Panel';
   };
 
@@ -135,14 +156,17 @@ export const Topbar: React.FC<TopbarProps> = ({
       <div className="topbar__company">
         <div className="topbar__logo topbar__interactive">
           {companyData.logo ? (
-            <img 
-              src={companyData.logo} 
+            <img
+              src={companyData.logo}
               alt={companyData.name}
-              onError={(e) => {
-                console.error("[Topbar] Error al cargar logo:", companyData.logo);
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                console.error('[Topbar] Error al cargar logo:', companyData.logo);
                 // Ocultar imagen y mostrar inicial
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.textContent = companyData.name.charAt(0);
+                const img = e.currentTarget;
+                img.style.display = 'none';
+                if (img.parentElement) {
+                  img.parentElement.textContent = companyData.name.charAt(0);
+                }
               }}
             />
           ) : (
@@ -160,10 +184,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         {showSearch ? (
           <div className="topbar__search">
             <span className="topbar__search-icon">🔍</span>
-            <input 
-              type="text" 
-              placeholder="Buscar usuarios, reportes..." 
-            />
+            <input type="text" placeholder="Buscar usuarios, reportes..." />
           </div>
         ) : (
           <h2 className="topbar__page-title">{getCurrentPageTitle()}</h2>

@@ -5,9 +5,9 @@ import { listTiposCredito } from "./tipos/service";
 import type { CreateCreditoInput, Client } from "./types";
 import type { TipoCredito } from "./tipos/types";
 
-const BASE_URL = "/api/Creditos/creditos/"; // URL con slash final (requerido por Django)
+const BASE_URL = "/api/creditos/"; // endpoint público: POST /api/creditos/ y GET /api/creditos/{id}/
 
-// Conectar con el service de clientes real
+ // Conectar con el service de clientes real
 export async function listClients(): Promise<Client[]> {
   try {
     const response = await listClientes(); // Usar el service existente de clientes
@@ -87,12 +87,9 @@ export async function createCredit(data: CreateCreditoInput) {
   try {
     console.log("📤 [CREDITOS] POST", BASE_URL);
     console.log("📋 [CREDITOS] Datos a enviar:", JSON.stringify(data, null, 2));
-    
     const response = await http.post(BASE_URL, data);
     
-    console.log("✅ [CREDITOS] Crédito creado exitosamente");
-    console.log("📋 [CREDITOS] Respuesta del servidor:", response.data);
-    
+    console.log("✅ [CREDITOS] Crédito creado exitosamente", response.status);
     return response.data;
   } catch (error: unknown) {
     console.error("❌ [CREDITOS] Error creating credit:", error);
@@ -535,5 +532,18 @@ export async function buscarCreditosPorCI(ci: string) {
 
 export async function obtenerHistorial() {
   return getHistorialCreditos(); // reutiliza la función ya implementada
+}
+
+/**
+ * Obtener detalle de un crédito (incluyendo datos relacionados)
+ */
+export async function getCreditDetail(id: number) {
+  try {
+    const response = await http.get(`${BASE_URL}${id}/`);
+    return response.data;
+  } catch (err) {
+    console.error("❌ [CREDITOS] getCreditDetail error:", err);
+    throw err;
+  }
 }
 

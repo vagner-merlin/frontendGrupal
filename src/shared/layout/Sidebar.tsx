@@ -4,6 +4,7 @@ import { useAuth } from "../../modules/auth/service";
 import { getMenuForUser, type MenuItem } from "./menuData";
 import { getPerfilUserByUsuarioId } from "../../modules/empresa/service";
 import "./sidebar.css";
+import type { AuthUser } from "../../modules/auth/types";
 
 export type SidebarProps = {
   brand?: string;
@@ -61,19 +62,22 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavig
 
   // Cargar foto de perfil del usuario desde la API
   useEffect(() => {
-    if (user?.id) {
-      getPerfilUserByUsuarioId(user.id)
-        .then((perfil) => {
-          if (perfil && perfil.imagen_url) {
-            console.log("[Sidebar] Foto de perfil cargada:", perfil.imagen_url);
-            setUserAvatarUrl(perfil.imagen_url);
-          }
-        })
-        .catch((err) => {
-          console.error("[Sidebar] Error al cargar foto de perfil:", err);
-        });
-    }
-  }, [user?.id]);
+    if (user?.id != null) {
+      const uid = Number(user.id);
+      if (!Number.isNaN(uid)) {
+        getPerfilUserByUsuarioId(uid)
+         .then((perfil) => {
+           if (perfil && perfil.imagen_url) {
+             console.log("[Sidebar] Foto de perfil cargada:", perfil.imagen_url);
+             setUserAvatarUrl(perfil.imagen_url);
+           }
+         })
+         .catch((err) => {
+           console.error("[Sidebar] Error al cargar foto de perfil:", err);
+         });
+      }
+     }
+   }, [user?.id]);
 
   useEffect(() => {
     try {
@@ -125,78 +129,101 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavig
   };
 
   const renderMenuItem = (item: MenuItem) => {
-    const to = item.path === "/" ? "/app" : item.path.startsWith("/app") ? item.path : `/app${item.path}`;
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedModules.includes(item.path);
-    const isActive = location.pathname === item.path || (hasChildren && item.children?.some(child => location.pathname === child.path));
+    // ocultar según roles si aplica
+    if (item.roles && item.roles.length && !item.roles.some(r => user?.roles?.includes(r))) {
+      return null;
+    }
 
-    if (hasChildren) {
+    // Si tiene children, renderizar como módulo expandible (usa clases que tu CSS espera)
+    if (item.children && item.children.length > 0) {
+      const expanded = expandedModules.includes(item.path);
       return (
         <div key={item.path} className="module-group">
-          <button
-            className={`module-link module-link--expandable${isActive ? " module-link--active" : ""}`}
+          <div
+            role="button"
+            tabIndex={0}
+            className={`module-link module-link--expandable ${expanded ? "module-link--active" : ""}`}
             onClick={() => toggleModule(item.path)}
-            title={collapsed ? item.label : undefined}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleModule(item.path); }}
+            title={item.label}
           >
-            <div className="module-icon">
-              {item.icon ?? "•"}
-            </div>
-            {!collapsed && (
-              <>
-                <span className="module-label">{item.label}</span>
-                <span className={`module-chevron ${isExpanded ? "module-chevron--expanded" : ""}`}>
-                  
-                </span>
-              </>
-            )}
-          </button>
+            <div className="module-icon">{item.icon}</div>
+            {!collapsed && <div className="module-label">{item.label}</div>}
+            <div className={`module-chevron ${expanded ? "module-chevron--expanded" : ""}`} />
+          </div>
 
-          {/* Submódulos - solo mostrar si está expandido y sidebar no está colapsado */}
-          {isExpanded && !collapsed && (
-            <div className="module-children">
-              {item.children?.map(child => (
-                <NavLink
-                  key={child.path}
-                  to={child.path}
-                  className={({ isActive }) => `module-link module-link--child${isActive ? " module-link--active" : ""}`}
-                  onClick={() => {
-                    if (collapseOnNavigate) {
-                      setCollapsed(true);
-                    }
-                  }}
-                >
-                  <div className="module-icon module-icon--child">
-                    {child.icon ?? "•"}
-                  </div>
-                  <span className="module-label">{child.label}</span>
-                </NavLink>
-              ))}
+          {expanded && (
+            <div className="module-children" aria-hidden={!expanded}>
+              {item.children!.map((child) => {
+                // verificar roles del child (si los tiene)
+                if (child.roles && child.roles.length && !child.roles.some(r => user?.roles?.includes(r))) {
+                  return null;
+                }
+
+                if (child.external) {
+                  return (
+                    <a
+                      key={child.path}
+                      href={child.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="module-link--child"
+                      title={child.label}
+                      onClick={() => collapseOnNavigate && setCollapsed(true)}
+                    >
+                      <div className="module-icon--child">{child.icon}</div>
+                      {!collapsed && <div className="module-label">{child.label}</div>}
+                    </a>
+                  );
+                }
+
+                return (
+                  <NavLink
+                    key={child.path}
+                    to={child.path}
+                    className={({ isActive }) => `module-link--child ${isActive ? "module-link--active" : ""}`}
+                    onClick={() => collapseOnNavigate && setCollapsed(true)}
+                    title={child.label}
+                  >
+                    <div className="module-icon--child">{child.icon}</div>
+                    {!collapsed && <div className="module-label">{child.label}</div>}
+                  </NavLink>
+                );
+              })}
             </div>
           )}
         </div>
       );
     }
 
-    // Módulo sin hijos
+    // elemento simple (sin children)
+    if (item.external) {
+      return (
+        <a
+          key={item.path}
+          href={item.path}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="module-link"
+          title={item.label}
+          onClick={() => collapseOnNavigate && setCollapsed(true)}
+        >
+          <div className="module-icon">{item.icon}</div>
+          {!collapsed && <div className="module-label">{item.label}</div>}
+        </a>
+      );
+    }
+
     return (
       <NavLink
         key={item.path}
-        to={to}
-        end={item.exact}
-        className={({ isActive }) => `module-link${isActive ? " module-link--active" : ""}`}
-        title={collapsed ? item.label : undefined}
-        onClick={() => {
-          if (collapseOnNavigate) {
-            setCollapsed(true);
-          }
-        }}
+        to={item.path}
+        className={({ isActive }) => `module-link ${isActive ? "module-link--active" : ""}`}
+        title={item.label}
+        onClick={() => collapseOnNavigate && setCollapsed(true)}
       >
-        <div className="module-icon">
-          {item.icon ?? "•"}
-        </div>
-        {!collapsed && (
-          <span className="module-label">{item.label}</span>
-        )}
+        <div className="module-icon">{item.icon}</div>
+        {!collapsed && <div className="module-label">{item.label}</div>}
       </NavLink>
     );
   };
@@ -207,11 +234,14 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavig
     ((user as unknown) as Record<string, unknown>)["imagen_url"] ?? 
     undefined);
 
-  const menuItems = getMenuForUser(user ?? null);
-  const userName = (user?.nombre_completo ?? user?.username) ?? "Usuario";
-  const companyName = user?.empresa_nombre ?? brand;
+  // grupos para mostrar en la sidebar (tipado explícito para evitar `any`)
+  const userGroups = (user as AuthUser & { grupos?: Array<{ id: number | string; nombre?: string | null }> })?.grupos ?? [];
 
-  return (
+   const menuItems = getMenuForUser(user ?? null);
+   const userName = (user?.nombre_completo ?? user?.username) ?? "Usuario";
+   const companyName = user?.empresa_nombre ?? brand;
+
+   return (
     <>
       <aside className={`sidebar ${collapsed ? "sidebar--collapsed" : ""}`} aria-hidden={collapsed}>
         {/* AVATAR CON LUZ VIBRANTE - PARTE SUPERIOR */}
@@ -242,8 +272,13 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavig
 
             {!collapsed && <div className="user-name">{userName}</div>}
             {!collapsed && companyName && <div className="brand-name" style={{ fontSize: 12, color: "var(--sidebar-text-muted)", marginTop: 4 }}>{companyName}</div>}
-          </div>
-        </div>
+            {!collapsed && userGroups.length > 0 && (
+              <div className="user-groups" style={{ fontSize: 12, color: "var(--sidebar-text-muted)", marginTop: 6 }}>
+                {userGroups.map((g) => (g?.nombre ?? "").trim()).filter(Boolean).join(", ")}
+              </div>
+            )}
+           </div>
+         </div>
 
         {/* BOTÓN DE TOGGLE */}
         <div className="sidebar__toggle-container">
@@ -290,10 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({ brand = "Mi Empresa", collapseOnNavig
           onClick={() => setCollapsed(true)}
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             background: "rgba(0, 0, 0, 0.6)",
             backdropFilter: "blur(4px)",
             zIndex: 999,
