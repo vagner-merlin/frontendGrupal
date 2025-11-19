@@ -303,24 +303,35 @@ export async function apiLogin(payload: LoginInput): Promise<AuthResponse> {
     // Leer token del response antes de cualquier uso
     const tokenVal = getString(resp, "token") ?? undefined;
  
-    // Intentar obtener grupos desde /api/User/me/ (no rompe si falla)
+    // Persistir sesión temporal con token para poder hacer la llamada a /me/
+    if (tokenVal) {
+      localStorage.setItem("auth.token", tokenVal);
+    }
+
+    // Obtener datos completos del usuario desde /api/User/me/
     try {
-      const me = await apiGetUserMe();
-      if (me && Array.isArray(me.grupos) && me.grupos.length > 0) {
-        // Asegurar formato en mappedUser sin usar `any`
-        type GrupoLite = { id: number | string; nombre?: string | null; descripcion?: string | null };
-        const casted = mappedUser as AuthUser & { grupos?: GrupoLite[] };
-        casted.grupos = me.grupos.map((g) => ({
-          id: g.id,
-          nombre: g.nombre ?? null,
-          descripcion: (g as { descripcion?: string | null }).descripcion ?? null,
-        }));
+      const meData = await apiGetUserMe();
+      if (meData) {
+        // Actualizar mappedUser con datos completos de /me/
+        mappedUser.is_staff = meData.is_staff;
+        mappedUser.is_superuser = meData.is_superuser;
+        mappedUser.is_active = meData.is_active;
+        mappedUser.date_joined = meData.date_joined;
+        mappedUser.grupos = meData.grupos;
+        mappedUser.total_grupos = meData.total_grupos;
+        mappedUser.empresa = meData.empresa;
+        mappedUser.perfil = meData.perfil;
+        mappedUser.first_name = meData.first_name;
+        mappedUser.last_name = meData.last_name;
+        mappedUser.nombre_completo = meData.nombre_completo;
+        
+        console.log('[AUTH] ✅ Datos completos del usuario desde /me/:', meData);
       }
     } catch (e) {
-      console.warn("[AUTH] No se pudieron obtener grupos desde /api/User/me/:", e);
+      console.warn("[AUTH] ⚠️ No se pudieron obtener datos completos desde /api/User/me/:", e);
     }
  
-    // Persistir sesión si hay token
+    // Persistir sesión completa
     if (tokenVal) {
       await persistSession(tokenVal, mappedUser);
     }
@@ -710,10 +721,20 @@ export function useAuth(): AuthCtx {
 
 /** Obtener perfil completo desde /api/User/me/ (incluye grupos con id/nombre) */
 export async function apiGetUserMe(): Promise<{
-  id?: number | string;
-  username?: string;
-  email?: string;
-  grupos?: Array<{ id: number | string; nombre?: string; descripcion?: string | null }>;
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  nombre_completo: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  is_active: boolean;
+  date_joined: string;
+  grupos: Array<{ id: number; nombre: string; descripcion: string }>;
+  total_grupos: number;
+  empresa: { id: number; razon_social: string; nombre_comercial: string; email_contacto: string };
+  perfil: { id: number; imagen_url: string };
 } | null> {
   try {
     const { data } = await http.get("/api/User/me/");

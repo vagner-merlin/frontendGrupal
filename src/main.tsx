@@ -13,10 +13,18 @@ import "./shared/layout/topbar.css";
 import { AuthProvider, useAuth } from "./modules/auth/service";
 /* src/shared/api/guards.tsx */
 import { RequireAuth } from "./shared/api/guards";
+/* src/shared/components/RoleBasedRoute.tsx */
+import { RoleBasedRedirect, RequireRole } from "./shared/components/RoleBasedRoute";
 
 /* -------------------- Layout principal -------------------- */
 /* src/modules/dashboard/dashboard.tsx */
 import DashboardLayout from "./modules/dashboard/dashboard";
+
+/* -------------------- Dashboards por Rol -------------------- */
+import DashboardAsesorCreditos from "./modules/dashboard/asesor_creditos";
+import DashboardSupervisor from "./modules/dashboard/supervisor";
+import DashboardGerente from "./modules/dashboard/gerente";
+import DashboardGestionFinanciera from "./modules/dashboard/gestion_financiera";
 
 /* -------------------- Landing / Auth pages -------------------- */
 /* src/modules/landing/landing_page.tsx */
@@ -78,21 +86,6 @@ import ReportesPage from "./modules/reportes/reportes";
 import HistorialActividadesPage from "./modules/actividades";
 
 /* -------------------- Router -------------------- */
-/* RequireRole: componente compacto para proteger rutas por rol */
-type RequireRoleProps = {
-  children: React.ReactElement;
-  roles: string[];
-  redirectTo?: string;
-};
-
-const RequireRole: React.FC<RequireRoleProps> = ({ children, roles, redirectTo = "/app" }) => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  const userRoles = Array.isArray(user.roles) ? user.roles.map(String) : [];
-  const allowed = roles.some(r => userRoles.includes(r));
-  return allowed ? children : <Navigate to={redirectTo} replace />;
-};
-
 /* Componente de inicio mejorado */
 export function Inicio() {
   const { user } = useAuth();
@@ -228,6 +221,48 @@ const router = createBrowserRouter([
     path: "/mi-suscripcion",
     element: <SubscriptionPage />,
   },
+  // Dashboards por rol (fuera del DashboardLayout porque tienen su propio diseño)
+  {
+    path: "/app/asesor-creditos",
+    element: (
+      <RequireAuth>
+        <RequireRole allowedGroups={[1]}>
+          <DashboardAsesorCreditos />
+        </RequireRole>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/app/supervisor",
+    element: (
+      <RequireAuth>
+        <RequireRole allowedGroups={[2]}>
+          <DashboardSupervisor />
+        </RequireRole>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/app/gerente",
+    element: (
+      <RequireAuth>
+        <RequireRole allowedGroups={[3]}>
+          <DashboardGerente />
+        </RequireRole>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/app/gestion-financiera",
+    element: (
+      <RequireAuth>
+        <RequireRole allowedGroups={[4]}>
+          <DashboardGestionFinanciera />
+        </RequireRole>
+      </RequireAuth>
+    ),
+  },
+  // Rutas principales bajo /app (para todos los usuarios autenticados)
   {
     path: "/app",
     element: (
@@ -236,14 +271,24 @@ const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Inicio /> },
-      // Panel administrativo (ruta interna que abre vista con enlace al Django Admin)
-      { path: "panel-admin", element: <RequireRole roles={["admin", "superadmin"]}><PanelAdmin /></RequireRole> },
-      { path: "empresas", element: <EmpresaPage /> },
-      { path: "usuarios", element: <RequireRole roles={["admin","superadmin"]}><UsersPage /></RequireRole> },
-      { path: "usuarios/crear", element: <RequireRole roles={["admin","superadmin"]}><CrearUsuario /></RequireRole> },
-      { path: "usuarios/roles", element: <RequireRole roles={["admin","superadmin"]}><GestionUsuariosRoles /></RequireRole> },
-      { path: "usuarios/:id/editar", element: <RequireRole roles={["admin","superadmin"]}><EditarUsuario /></RequireRole> },
+      // Ruta index: redirige según el rol o muestra Inicio para superuser
+      { index: true, element: <RoleBasedRedirect><Inicio /></RoleBasedRedirect> },
+      
+      // Panel administrativo (solo superuser)
+      { path: "panel-admin", element: <RequireRole requireSuperuser={true}><PanelAdmin /></RequireRole> },
+      { path: "empresas", element: <RequireRole requireSuperuser={true}><EmpresaPage /></RequireRole> },
+      
+      // Usuarios (solo admin/superuser)
+      { path: "usuarios", element: <RequireRole requireSuperuser={true}><UsersPage /></RequireRole> },
+      { path: "usuarios/crear", element: <RequireRole requireSuperuser={true}><CrearUsuario /></RequireRole> },
+      { path: "usuarios/roles", element: <RequireRole requireSuperuser={true}><GestionUsuariosRoles /></RequireRole> },
+      { path: "usuarios/:id/editar", element: <RequireRole requireSuperuser={true}><EditarUsuario /></RequireRole> },
+      { path: "gestion-usuarios", element: <RequireRole requireSuperuser={true}><GestionUsuariosRoles /></RequireRole> },
+      
+      // Grupos (solo admin/superuser)
+      { path: "grupos", element: <RequireRole requireSuperuser={true}><GruposPage /></RequireRole> },
+      
+      // Clientes (todos los roles)
       { 
         path: "clientes", 
         element: <ClientesPage />, 
@@ -255,17 +300,23 @@ const router = createBrowserRouter([
           { path: ":id/editar", element: <EditarClientePage /> },
         ] 
       },
-      { path: "gestion-usuarios", element: <GestionUsuariosRoles /> },
-      // Nota: la ruta de edición de usuarios ya está registrada más arriba como:
-      // { path: "usuarios/:id/editar", element: <RequireRole roles={["admin","superadmin"]}><EditarUsuario /></RequireRole> }
-      { path: "grupos", element: <GruposPage /> },
+      
+      // Actividades y auditoría (todos los roles)
       { path: "actividades", element: <HistorialActividadesPage /> },
       { path: "auditoria", element: <HistorialAuditoriaPage /> },
+      
+      // Reportes y personalización (todos los roles)
       { path: "reportes", element: <ReportesPage /> },
       { path: "personalizacion", element: <PersonalizacionPage /> },
       { path: "personalizacion/fotos", element: <CambiarFotosPage /> },
+      
+      // Ingresos (solo ciertos roles)
       { path: "ingresos", element: <DashboardIngresos /> },
-      { path: "backup", element: <BackupPage /> },
+      
+      // Backup (solo superuser)
+      { path: "backup", element: <RequireRole requireSuperuser={true}><BackupPage /></RequireRole> },
+      
+      // Créditos (todos los roles)
       {
         path: "creditos",
         element: <CreditsPage />,
@@ -274,10 +325,12 @@ const router = createBrowserRouter([
           { path: "crear", element: <CrearCreditoPage /> },
           { path: "consulta", element: <ConsultaEstadoPage /> },
           { path: "historial-completo", element: <HistorialCompletoPage /> },
-          { path: "tipos", element: <RequireRole roles={["admin","superadmin"]}><TiposCreditoPage /></RequireRole> },
+          { path: "tipos", element: <RequireRole requireSuperuser={true}><TiposCreditoPage /></RequireRole> },
           { path: ":id/workflow", element: <CreditoWorkflowVisor /> },
         ],
       },
+      
+      // Pagos (todos los roles)
       { path: "pagos", element: <PagosPage /> },
       { path: "pago-exitoso", element: <PagoExitoso /> },
       { path: "pago-cancelado", element: <PagoCancelado /> },

@@ -18,6 +18,42 @@ export type RegisterInput = {
   telefono: string;
 };
 
+// === Tipos para /api/User/me/ ===
+export type GrupoDTO = {
+  id: number;
+  nombre: string;
+  descripcion: string;
+};
+
+export type EmpresaDTO = {
+  id: number;
+  razon_social: string;
+  nombre_comercial: string;
+  email_contacto: string;
+};
+
+export type PerfilDTO = {
+  id: number;
+  imagen_url: string;
+};
+
+export type UserMeDTO = {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  nombre_completo: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  is_active: boolean;
+  date_joined: string;
+  grupos: GrupoDTO[];
+  total_grupos: number;
+  empresa: EmpresaDTO;
+  perfil: PerfilDTO;
+};
+
 /** Roles globales (no requieren tenant) */
 export type GlobalRole = "superadmin" | "platform_admin" | "admin" | "user";
 
@@ -43,6 +79,8 @@ export type AuthUser = {
   username?: string;
   email?: string;
   nombre_completo?: string;
+  first_name?: string;
+  last_name?: string;
 
   // Roles y permisos
   role?: string; // Rol principal del usuario (p. ej. "superadmin", "administrador", "usuario")
@@ -56,6 +94,16 @@ export type AuthUser = {
   // Tenant ID (compat)
   tenant_id?: string | number | null;
   permissions?: string[]; // p. ej. ["*"] para superadmin
+  
+  // Datos del endpoint /api/User/me/
+  is_staff?: boolean;
+  is_superuser?: boolean;
+  is_active?: boolean;
+  date_joined?: string;
+  grupos?: GrupoDTO[];
+  total_grupos?: number;
+  empresa?: EmpresaDTO;
+  perfil?: PerfilDTO;
 };
 
 export type AuthResponse = {

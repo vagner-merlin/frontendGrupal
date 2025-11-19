@@ -2,34 +2,96 @@
 import { http } from "../../shared/api/client";
 import type { Group, Permission, CreateGroupInput, UpdateGroupInput } from "./types";
 
+// Endpoints actualizados para Django auth groups
 const BASE_URL = "/api/User/group/";
 const PERMISSIONS_URL = "/api/User/permission/";
 
+// Endpoint alternativo para Django's built-in groups
+const DJANGO_GROUPS_URL = "/api/auth/group/";
+const DJANGO_GROUPS_ALT_URL = "/api/groups/";
+
+/**
+ * Normaliza un grupo para usar siempre el formato esperado por el frontend
+ */
+function normalizeGroup(group: any): Group {
+  return {
+    id: group.id,
+    nombre: group.nombre || group.name || "",
+    name: group.name || group.nombre || "",
+    empresa: group.empresa,
+    empresa_nombre: group.empresa_nombre,
+    descripcion: group.descripcion || group.description || "",
+    description: group.description || group.descripcion || "",
+    permisos: group.permisos || group.permissions || [],
+    permissions: group.permissions || group.permisos || [],
+    usuarios: group.usuarios || group.users || [],
+    users: group.users || group.usuarios || [],
+    total_usuarios: group.total_usuarios,
+    total_permisos: group.total_permisos,
+    fecha_creacion: group.fecha_creacion
+  };
+}
+
 /**
  * Listar todos los grupos
+ * Intenta múltiples endpoints para encontrar el correcto
  */
 export async function listGroups(): Promise<Group[]> {
-  try {
-    const { data } = await http.get<{ value: Group[]; Count: number } | Group[]>(BASE_URL);
-    
-    // El backend puede devolver { value: [...], Count: n } o un array directo
-    if (data && typeof data === 'object' && 'value' in data) {
-      console.log("✅ Grupos cargados:", data.value.length);
-      return data.value;
+  console.log("🔍 [SERVICE] Iniciando listGroups()");
+  
+  // Lista de endpoints a probar
+  const endpoints = [BASE_URL, DJANGO_GROUPS_URL, DJANGO_GROUPS_ALT_URL];
+  
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`🔍 [SERVICE] Probando endpoint: ${endpoint}`);
+      const { data } = await http.get<{ value: Group[]; Count: number } | Group[]>(endpoint);
+      
+      console.log(`📦 [SERVICE] Respuesta recibida de ${endpoint}:`, data);
+      console.log(`📦 [SERVICE] Tipo de respuesta:`, typeof data);
+      console.log(`📦 [SERVICE] Es array?:`, Array.isArray(data));
+      console.log(`📦 [SERVICE] Tiene propiedad 'value'?:`, data && typeof data === 'object' && 'value' in data);
+      
+      let grupos: Group[] = [];
+      
+      // El backend puede devolver { value: [...], Count: n } o un array directo
+      if (data && typeof data === 'object' && 'value' in data) {
+        console.log(`✅ [SERVICE] Formato value detectado desde ${endpoint}, cantidad:`, data.value.length);
+        grupos = data.value;
+      } else if (Array.isArray(data)) {
+        console.log(`✅ [SERVICE] Array directo detectado desde ${endpoint}, cantidad:`, data.length);
+        grupos = data;
+      } else {
+        console.warn(`⚠️ [SERVICE] Formato de respuesta inesperado desde ${endpoint}:`, data);
+        continue;
+      }
+      
+      console.log(`🔄 [SERVICE] Normalizando ${grupos.length} grupos...`);
+      
+      // Normalizar grupos para usar formato consistente
+      const gruposNormalizados = grupos.map(normalizeGroup);
+      
+      console.log(`✅ [SERVICE] Grupos normalizados:`, gruposNormalizados);
+      
+      return gruposNormalizados;
+      
+    } catch (error) {
+      console.warn(`⚠️ [SERVICE] Error con endpoint ${endpoint}:`, error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: unknown; status?: number; statusText?: string } };
+        console.warn(`📍 [SERVICE] Status HTTP:`, axiosError.response?.status);
+        console.warn(`📍 [SERVICE] Status Text:`, axiosError.response?.statusText);
+        console.warn(`📍 [SERVICE] Data:`, axiosError.response?.data);
+      }
+      // Continuar con el siguiente endpoint
+      continue;
     }
-    
-    // Si es un array directo
-    if (Array.isArray(data)) {
-      console.log("✅ Grupos cargados:", data.length);
-      return data;
-    }
-    
-    console.warn("⚠️ Formato de respuesta inesperado:", data);
-    return [];
-  } catch (error) {
-    console.error("❌ Error al listar grupos:", error);
-    throw error;
   }
+  
+  // Si ningún endpoint funcionó, lanzar error
+  console.error("❌ [SERVICE] No se pudo cargar grupos desde ningún endpoint");
+  console.error("❌ [SERVICE] Endpoints probados:", endpoints);
+  return [];
 }
 
 /**

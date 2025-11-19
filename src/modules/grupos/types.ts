@@ -9,12 +9,16 @@ export interface Permission {
 
 export interface Group {
   id: number;
-  nombre: string;
-  empresa: number;
+  nombre?: string; // Campo personalizado del backend
+  name?: string;   // Campo estándar de Django auth.Group
+  empresa?: number;
   empresa_nombre?: string;
   descripcion?: string;
-  permisos: number[];
+  description?: string; // Alias
+  permisos?: number[];
+  permissions?: number[]; // Alias para permisos en inglés
   usuarios?: number[];
+  users?: number[]; // Alias para usuarios en inglés
   total_usuarios?: number;
   total_permisos?: number;
   fecha_creacion?: string;

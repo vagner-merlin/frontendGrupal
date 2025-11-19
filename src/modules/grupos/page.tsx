@@ -120,9 +120,11 @@ const GruposPage: React.FC = () => {
   const cargarGrupos = async () => {
     setLoading(true);
     try {
-      console.log("🔄 Cargando grupos...");
+      console.log("🔄 [GRUPOS PAGE] Iniciando carga de grupos...");
       const data = await listGroups();
-      console.log("✅ Grupos cargados:", data?.length || 0);
+      console.log("✅ [GRUPOS PAGE] Grupos recibidos del servicio:", data);
+      console.log("✅ [GRUPOS PAGE] Total de grupos:", data?.length || 0);
+      console.log("✅ [GRUPOS PAGE] Datos completos:", JSON.stringify(data, null, 2));
       setGrupos(data || []);
     } catch (err) {
       let errorMessage = "Error al cargar grupos";
@@ -132,7 +134,7 @@ const GruposPage: React.FC = () => {
       }
       setErrorMessage(errorMessage);
       setShowErrorNotification(true);
-      console.error("❌ Error al cargar grupos:", err);
+      console.error("❌ [GRUPOS PAGE] Error al cargar grupos:", err);
       setGrupos([]);
     } finally {
       setLoading(false);
@@ -395,10 +397,10 @@ const GruposPage: React.FC = () => {
                 <tr key={grupo.id}>
                   <td><strong>#{grupo.id}</strong></td>
                   <td>
-                    <strong style={{ fontSize: "15px" }}>{grupo.nombre}</strong>
-                    {grupo.descripcion && (
+                    <strong style={{ fontSize: "15px" }}>{grupo.nombre || grupo.name}</strong>
+                    {(grupo.descripcion || grupo.description) && (
                       <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
-                        {grupo.descripcion}
+                        {grupo.descripcion || grupo.description}
                       </div>
                     )}
                   </td>
@@ -418,7 +420,7 @@ const GruposPage: React.FC = () => {
                       </button>
                       <button
                         className="btn-grupos btn-grupos--delete"
-                        onClick={() => handleDelete(grupo.id, grupo.nombre)}
+                        onClick={() => handleDelete(grupo.id, grupo.nombre || grupo.name || "")}
                         title="Eliminar grupo"
                       >
                         🗑️ Eliminar
