@@ -43,12 +43,12 @@ const DjangoAdminPage: React.FC = () => {
   };
 
   const openDjangoAdmin = (section: string = "") => {
-    const url = `http://127.0.0.1:8000/admin/${section}`;
+    const url = `http://18.116.21.77:8000/admin/${section}`;
     window.open(url, 'django-admin', 'width=1200,height=800,scrollbars=yes,resizable=yes');
   };
 
   const openDjangoLogin = () => {
-    const loginUrl = "http://127.0.0.1:8000/admin/login/";
+    const loginUrl = "http://18.116.21.77:8000/admin/login/";
     window.open(loginUrl, 'django-login', 'width=600,height=500,scrollbars=yes,resizable=yes');
   };
 

@@ -144,7 +144,7 @@ export async function createCredit(data: CreateCreditoInput) {
       } else if (error.request) {
         // La solicitud fue hecha pero no hubo respuesta
         console.error("❌ [CREDITOS] No response:", error.request);
-        throw new Error("No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://127.0.0.1:8000");
+        throw new Error("No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://18.116.21.77:8000");
       }
     }
     

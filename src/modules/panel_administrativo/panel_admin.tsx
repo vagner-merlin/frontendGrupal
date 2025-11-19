@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-const ADMIN_URL = "http://127.0.0.1:8000/admin/auth/";
+const ADMIN_URL = "http://18.116.21.77:8000/admin/auth/";
 
 const PanelAdmin: React.FC = () => {
   useEffect(() => {

@@ -5,7 +5,7 @@ import type { InternalAxiosRequestConfig } from "axios";
    CONFIG desde variables .env
    ============================ */
 export const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://18.116.21.77:8000",
   mode: import.meta.env.VITE_API_MODE || "hybrid",
   timeout: 10000,
   authScheme: "Token",  // Django Rest Framework usa "Token" no "Bearer"

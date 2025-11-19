@@ -9,7 +9,7 @@ const DashboardGerente: React.FC = () => {
   const getImageUrl = (url: string | undefined) => {
     if (!url) return "https://via.placeholder.com/150";
     if (url.startsWith("http")) return url;
-    return `http://127.0.0.1:8000${url}`;
+    return `http://18.116.21.77:8000${url}`;
   };
 
   const grupoNombre = user?.grupos && user.grupos.length > 0 

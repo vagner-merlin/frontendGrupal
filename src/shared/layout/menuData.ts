@@ -122,7 +122,7 @@ export function getMenuForUser(user: AuthUser | null): MenuItem[] {
 
     // Panel administrativo y empresas (admins)
     {
-      path: "http://127.0.0.1:8000/admin/auth/",
+      path: "http://18.116.21.77:8000/admin/auth/",
       label: "Panel administrativo",
       icon: "🛠️",
       external: true,

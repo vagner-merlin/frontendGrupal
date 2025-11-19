@@ -54,7 +54,7 @@ export async function createTipoCredito(data: CreateTipoCreditoInput): Promise<T
  /**
  * HU10: Tipos de Crédito - Documentación API
  * 
- * Base URL: http://127.0.0.1:8000/api/Creditos/tipo-creditos/
+ * Base URL: http://18.116.21.77:8000/api/Creditos/tipo-creditos/
  *
  * Endpoints disponibles:
  * - GET    /api/Creditos/tipo-creditos/     → Listar todos

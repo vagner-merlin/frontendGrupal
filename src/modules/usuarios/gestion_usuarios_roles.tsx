@@ -80,7 +80,7 @@ export default function GestionUsuariosRoles() {
       title: 'Django Admin - Usuarios',
       description: 'Panel nativo de Django para gestión avanzada de usuarios',
       icon: '🔧',
-      externalUrl: 'http://127.0.0.1:8000/admin/auth/user/',
+      externalUrl: 'http://18.116.21.77:8000/admin/auth/user/',
       bgColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
       type: 'django-admin'
     },
@@ -89,7 +89,7 @@ export default function GestionUsuariosRoles() {
       title: 'Django Admin - Grupos',
       description: 'Panel nativo de Django para gestión avanzada de grupos',
       icon: '⚙️',
-      externalUrl: 'http://127.0.0.1:8000/admin/auth/group/',
+      externalUrl: 'http://18.116.21.77:8000/admin/auth/group/',
       bgColor: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
       type: 'django-admin'
     },
@@ -98,7 +98,7 @@ export default function GestionUsuariosRoles() {
       title: 'Django Admin - Permisos',
       description: 'Panel nativo de Django para gestión de permisos del sistema',
       icon: '🔐',
-      externalUrl: 'http://127.0.0.1:8000/admin/auth/permission/',
+      externalUrl: 'http://18.116.21.77:8000/admin/auth/permission/',
       bgColor: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
       type: 'django-admin'
     },
