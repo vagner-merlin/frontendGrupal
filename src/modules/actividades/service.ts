@@ -1,3 +1,5 @@
+import { http } from "../../shared/api/client";
+
 export interface ActivityItem {
   id: string;
   user: string;         // nombre o username
@@ -24,19 +26,14 @@ export async function fetchActivities(
   page = 1,
   pageSize = 50
 ): Promise<ActivitiesPage> {
-  const params = new URLSearchParams();
-  params.set("page", String(page));
-  params.set("page_size", String(pageSize));
-  if (companyId !== undefined && companyId !== null) params.set("empresa", String(companyId));
-
-  const url = `/api/admin-log/?${params.toString()}`; // ajusta si tu ruta es /api/admin-log/ o /api/User/admin-log/
-  const res = await fetch(url, { credentials: "include" });
-
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Error al obtener actividades (${res.status}) ${txt}`);
+  const params: Record<string, string> = {
+    page: String(page),
+    page_size: String(pageSize),
+  };
+  if (companyId !== undefined && companyId !== null) {
+    params.empresa = String(companyId);
   }
 
-  const json = (await res.json()) as ActivitiesPage;
-  return json;
+  const response = await http.get<ActivitiesPage>("/api/admin-log/", { params });
+  return response.data;
 }

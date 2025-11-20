@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../auth/service";
+import { http } from "../../shared/api/client";
 import UsersPage from "../usuarios/page"; // ← USAR LA PÁGINA COMPLETA DE USUARIOS
 import "../../styles/theme.css";
 
@@ -25,19 +26,12 @@ const DjangoAdminPage: React.FC = () => {
 
   const checkDjangoAuth = async () => {
     try {
-      // Llamar a tu endpoint /api/auth/me/ que devuelve el user (token-based)
-      const res = await fetch("/api/auth/me/", {
-        headers: { Authorization: `Token ${localStorage.getItem("auth.token") ?? ""}` },
-      });
-      if (res.ok) {
-        // usuario autenticado por token
-        setLoading(false);
-        return;
-      }
-      setError("Necesita autenticarse en Django Admin");
+      // Llamar a tu endpoint /api/auth/me/ usando el cliente configurado
+      await http.get("/api/auth/me/");
+      // usuario autenticado por token
+      setLoading(false);
     } catch {
-      setError("No se puede conectar con Django Admin");
-    } finally {
+      setError("Necesita autenticarse en Django Admin o no se puede conectar");
       setLoading(false);
     }
   };
