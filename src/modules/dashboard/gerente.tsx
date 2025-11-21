@@ -117,6 +117,28 @@ const DashboardGerente: React.FC = () => {
               <p className="stat-value">-</p>
             </div>
           </div>
+
+          <div 
+            className="stat-card" 
+            onClick={() => navigate("/app/assistant")}
+            style={{ cursor: "pointer", transition: "all 0.3s" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-5px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(59, 130, 246, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "";
+            }}
+          >
+            <div className="stat-icon">🤖</div>
+            <div className="stat-content">
+              <h4>Asistente IA</h4>
+              <p className="stat-value" style={{ fontSize: "14px", opacity: 0.8 }}>
+                Grupo Gerente
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

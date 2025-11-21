@@ -85,6 +85,9 @@ import HistorialAuditoriaPage from "./modules/auditoria/historial";
 import ReportesPage from "./modules/reportes/reportes";
 import HistorialActividadesPage from "./modules/actividades";
 
+/* Asistente IA */
+import AssistantPage from "./modules/assistant/page";
+
 /* -------------------- Router -------------------- */
 /* Componente de inicio mejorado */
 export function Inicio() {
@@ -304,6 +307,9 @@ const router = createBrowserRouter([
       // Actividades y auditoría (todos los roles)
       { path: "actividades", element: <HistorialActividadesPage /> },
       { path: "auditoria", element: <HistorialAuditoriaPage /> },
+      
+      // Asistente IA (solo gerentes y administradores)
+      { path: "assistant", element: <AssistantPage /> },
       
       // Reportes y personalización (todos los roles)
       { path: "reportes", element: <ReportesPage /> },
