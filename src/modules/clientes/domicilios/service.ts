@@ -45,6 +45,33 @@ export async function createDomicilio(input: CreateDomicilioInput): Promise<Domi
 }
 
 /**
+ * Crear domicilio con archivo (croquis)
+ */
+export async function createDomicilioWithFile(input: CreateDomicilioInput, file?: File): Promise<Domicilio> {
+  console.log("✨ [DOMICILIO] POST con archivo", BASE_URL);
+  
+  const formData = new FormData();
+  formData.append('descripcion', input.descripcion);
+  formData.append('croquis_url', input.croquis_url || '');
+  formData.append('es_propietario', String(input.es_propietario));
+  formData.append('numero_ref', input.numero_ref);
+  
+  if (file) {
+    formData.append('croquis_file', file);
+    console.log("🗺️ Croquis adjuntado:", file.name);
+  }
+  
+  if (input.id_cliente) {
+    formData.append('id_cliente', String(input.id_cliente));
+  }
+  
+  const { data } = await http.post<Domicilio>(BASE_URL, formData);
+  
+  console.log("✅ [DOMICILIOS] Creado con archivo:", data);
+  return data;
+}
+
+/**
  * Actualizar domicilio
  */
 export async function updateDomicilio(id: number, input: UpdateDomicilioInput): Promise<Domicilio> {

@@ -62,7 +62,7 @@ export default function GestionUsuariosRoles() {
       title: 'Crear Usuario',
       description: 'Crear nuevo usuario con roles y permisos personalizados',
       icon: '👤',
-      path: '/app/crear-usuario',
+      path: '/app/usuarios/crear',
       bgColor: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
       type: 'internal'
     },

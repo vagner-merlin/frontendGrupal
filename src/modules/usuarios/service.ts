@@ -48,6 +48,38 @@ export async function createUser(userData: CreateUserPayload): Promise<CreateUse
     console.log("✅ Usuario creado:", data);
     return data;
   } catch (error) {
+    console.error("❌ Error al crear usuario:", error);
+    throw error;
+  }
+}
+
+export async function createUserWithImage(userData: CreateUserPayload, imagenFile?: File): Promise<CreateUserResponse> {
+  console.log("📤 Creando usuario con imagen:", userData);
+  try {
+    const formData = new FormData();
+    formData.append('username', userData.username);
+    formData.append('password', userData.password || "defaultPassword123");
+    formData.append('email', userData.email);
+    formData.append('first_name', userData.first_name);
+    formData.append('last_name', userData.last_name);
+    formData.append('empresa_id', String(userData.empresa_id || 1));
+    
+    if (imagenFile) {
+      formData.append('imagen_perfil', imagenFile);
+      console.log("📷 Imagen adjuntada:", imagenFile.name);
+    } else if (userData.imagen_url) {
+      formData.append('imagen_url', userData.imagen_url);
+    }
+    
+    console.log("📤 FormData enviado al backend");
+    const { data } = await http.post<CreateUserResponse>(CREATE_URL, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log("✅ Usuario creado con imagen:", data);
+    return data;
+  } catch (error) {
     console.error("❌ Error creando usuario:", error);
     throw error;
   }

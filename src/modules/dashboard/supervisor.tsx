@@ -1,10 +1,17 @@
 // src/modules/dashboard/supervisor.tsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/service";
 import "../../styles/dashboard.css";
 
 const DashboardSupervisor: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const getImageUrl = (url: string | undefined) => {
     if (!url) return "https://via.placeholder.com/150";
@@ -19,6 +26,35 @@ const DashboardSupervisor: React.FC = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
+        <button 
+          onClick={handleLogout}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            padding: '10px 20px',
+            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '14px',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
+            transition: 'all 0.2s',
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+          }}
+        >
+          🚪 Salir
+        </button>
         <div className="user-info-card">
           <div className="user-avatar">
             <img 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCliente } from '../context/useCliente';
-import { createTrabajo } from '../trabajo/service';
+import { createTrabajoWithFile } from '../trabajo/service';
 import '../../../styles/theme.css';
 
 const CrearTrabajoStep: React.FC = () => {
@@ -8,11 +8,12 @@ const CrearTrabajoStep: React.FC = () => {
   const [form, setForm] = useState({
     cargo: '',
     empresa: '',
-    extracto_url: '',
     salario: '',
     ubicacion: '',
     descripcion: ''
   });
+  const [extractoFile, setExtractoFile] = useState<File | null>(null);
+  const [extractoPreview, setExtractoPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -20,6 +21,15 @@ const CrearTrabajoStep: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setExtractoFile(file);
+      setExtractoPreview(file.name);
+      setError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +43,7 @@ const CrearTrabajoStep: React.FC = () => {
     }
 
     // Validaciones
-    if (!form.cargo.trim() || !form.empresa.trim() || !form.extracto_url.trim() ||
+    if (!form.cargo.trim() || !form.empresa.trim() ||
         !form.salario || !form.ubicacion.trim() || !form.descripcion.trim()) {
       setError('Todos los campos son requeridos');
       return;
@@ -45,9 +55,8 @@ const CrearTrabajoStep: React.FC = () => {
       return;
     }
 
-    // Validar formato de URL
-    if (!form.extracto_url.trim().startsWith('http://') && !form.extracto_url.trim().startsWith('https://')) {
-      setError('La URL del extracto bancario debe comenzar con http:// o https://');
+    if (!extractoFile) {
+      setError('Debe seleccionar un archivo de extracto bancario');
       return;
     }
 
@@ -57,15 +66,15 @@ const CrearTrabajoStep: React.FC = () => {
       const payload = {
         cargo: form.cargo.trim(),
         empresa: form.empresa.trim(),
-        extracto_url: form.extracto_url.trim(),
+        extracto_url: '',
         salario: salarioNum,
         ubicacion: form.ubicacion.trim(),
         descripcion: form.descripcion.trim(),
         id_cliente: clienteId
       };
 
-      console.log('📤 Enviando información laboral:', payload);
-      const resultado = await createTrabajo(payload);
+      console.log('📤 Enviando información laboral con archivo:', extractoFile.name);
+      const resultado = await createTrabajoWithFile(payload, extractoFile);
       console.log('✅ Trabajo creado:', resultado);
 
       setSuccess('✅ Información laboral registrada exitosamente');
@@ -251,24 +260,51 @@ const CrearTrabajoStep: React.FC = () => {
             />
           </div>
 
-          {/* URL Extracto */}
+          {/* Upload Extracto */}
           <div style={{ gridColumn: '1 / -1' }}>
             <label className="ui-label">
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🔗</span>
-                <span>URL del Extracto Bancario *</span>
+                <span>📄</span>
+                <span>Extracto Bancario (últimos 3 meses) *</span>
               </span>
             </label>
             <input
-              type="url"
-              name="extracto_url"
-              className="ui-input"
-              placeholder="https://storage.ejemplo.com/docs/extracto-bancario.pdf"
-              value={form.extracto_url}
-              onChange={handleChange}
+              type="file"
+              id="extracto_file"
+              onChange={handleFileChange}
               disabled={loading}
-              required
+              accept=".pdf,.jpg,.jpeg,.png"
+              style={{ display: 'none' }}
             />
+            <label
+              htmlFor="extracto_file"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                border: '2px dashed var(--ui-border)',
+                borderRadius: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                backgroundColor: 'var(--ui-bg-secondary)',
+                transition: 'all 0.2s',
+                minHeight: '100px'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.borderColor = 'var(--ui-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ui-border)';
+              }}
+            >
+              <span style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {extractoPreview ? '📄' : '📤'}
+              </span>
+              <span style={{ color: 'var(--ui-text-secondary)', textAlign: 'center' }}>
+                {extractoPreview || 'Clic para seleccionar extracto bancario (PDF, JPG, PNG)'}
+              </span>
+            </label>
           </div>
 
           {/* Descripción */}

@@ -44,6 +44,31 @@ export async function createDocumentacion(input: CreateDocumentacionInput): Prom
 }
 
 /**
+ * Crear documentación con archivo
+ */
+export async function createDocumentacionWithFile(input: CreateDocumentacionInput, file?: File): Promise<Documentacion> {
+  console.log("✨ [DOCUMENTACION] POST con archivo", BASE_URL);
+  
+  const formData = new FormData();
+  formData.append('ci', input.ci);
+  formData.append('documento_url', input.documento_url || '');
+  
+  if (file) {
+    formData.append('documento_file', file);
+    console.log("📄 Archivo adjuntado:", file.name);
+  }
+  
+  if (input.id_cliente) {
+    formData.append('id_cliente', String(input.id_cliente));
+  }
+  
+  const { data } = await http.post<Documentacion>(BASE_URL, formData);
+  
+  console.log("✅ [DOCUMENTACION] Creado con archivo:", data);
+  return data;
+}
+
+/**
  * Actualizar documentación
  */
 export async function updateDocumentacion(id: number, input: UpdateDocumentacionInput): Promise<Documentacion> {

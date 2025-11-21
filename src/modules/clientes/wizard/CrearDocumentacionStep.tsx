@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useCliente } from '../context/useCliente';
-import { createDocumentacion } from '../documentacion/service';
+import { createDocumentacionWithFile } from '../documentacion/service';
 import '../../../styles/theme.css';
 
 const CrearDocumentacionStep: React.FC = () => {
   const { clienteId, setPasoActual, marcarPasoCompletado, clienteData } = useCliente();
   const [form, setForm] = useState({
-    ci: '',
-    documento_url: ''
+    ci: ''
   });
+  const [documentoFile, setDocumentoFile] = useState<File | null>(null);
+  const [documentoPreview, setDocumentoPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -16,6 +17,15 @@ const CrearDocumentacionStep: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDocumentoFile(file);
+      setDocumentoPreview(file.name);
+      setError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,14 +49,8 @@ const CrearDocumentacionStep: React.FC = () => {
       return;
     }
 
-    if (!form.documento_url.trim()) {
-      setError('La URL del documento es requerida');
-      return;
-    }
-
-    // Validar formato de URL
-    if (!form.documento_url.startsWith('http://') && !form.documento_url.startsWith('https://')) {
-      setError('La URL debe comenzar con http:// o https://');
+    if (!documentoFile) {
+      setError('Debe seleccionar un archivo de documento');
       return;
     }
 
@@ -55,12 +59,12 @@ const CrearDocumentacionStep: React.FC = () => {
     try {
       const payload = {
         ci: form.ci.trim(),
-        documento_url: form.documento_url.trim(),
+        documento_url: '', // Se llenará con la URL de S3
         id_cliente: clienteId
       };
 
-      console.log('📤 Enviando documentación:', payload);
-      const resultado = await createDocumentacion(payload);
+      console.log('📤 Enviando documentación con archivo:', documentoFile.name);
+      const resultado = await createDocumentacionWithFile(payload, documentoFile);
       console.log('✅ Documentación creada:', resultado);
 
       setSuccess('✅ Documentación registrada exitosamente');
@@ -194,26 +198,67 @@ const CrearDocumentacionStep: React.FC = () => {
             </small>
           </div>
 
-          {/* URL del Documento */}
+          {/* Documento */}
           <div>
             <label className="ui-label">
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🔗</span>
-                <span>URL del Documento Escaneado *</span>
+                <span>📄</span>
+                <span>Documento Escaneado (PDF o Imagen) *</span>
               </span>
             </label>
-            <input
-              type="url"
-              name="documento_url"
-              className="ui-input"
-              placeholder="https://storage.ejemplo.com/docs/ci-7845123.pdf"
-              value={form.documento_url}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div style={{
+              border: '2px dashed #6366f1',
+              borderRadius: '12px',
+              padding: '24px',
+              textAlign: 'center',
+              background: 'rgba(99, 102, 241, 0.05)',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}>
+              <input
+                type="file"
+                id="documento_file"
+                accept="application/pdf,image/*"
+                onChange={handleFileChange}
+                disabled={loading}
+                required
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="documento_file" style={{ cursor: 'pointer', display: 'block' }}>
+                {documentoPreview ? (
+                  <div>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📄</div>
+                    <div style={{ color: '#10b981', fontWeight: '600', marginBottom: '8px' }}>
+                      ✓ Archivo seleccionado
+                    </div>
+                    <div style={{ color: '#6b7280', fontSize: '14px' }}>
+                      {documentoPreview}
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <span style={{
+                        color: '#6366f1',
+                        fontSize: '14px',
+                        textDecoration: 'underline'
+                      }}>
+                        Clic para cambiar archivo
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📤</div>
+                    <div style={{ color: '#374151', fontWeight: '600', marginBottom: '8px' }}>
+                      Clic para seleccionar archivo
+                    </div>
+                    <div style={{ color: '#6b7280', fontSize: '13px' }}>
+                      PDF, JPG, PNG (máx. 10MB)
+                    </div>
+                  </div>
+                )}
+              </label>
+            </div>
             <small style={{ color: '#6b7280', fontSize: '13px', marginTop: '4px', display: 'block' }}>
-              URL completa del documento (debe iniciar con http:// o https://)
+              El archivo se subirá automáticamente a AWS S3
             </small>
           </div>
         </div>

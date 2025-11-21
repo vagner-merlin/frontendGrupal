@@ -125,69 +125,6 @@ const AuthPage: React.FC = () => {
             <h2>Iniciar Sesión</h2>
             <p>Ingrese sus credenciales para acceder al sistema</p>
 
-            {/* Panel de credenciales demo mejorado */}
-            <div style={{
-              background: "#fffbeb",
-              padding: "12px",
-              borderRadius: "6px",
-              marginBottom: "16px",
-              border: "1px solid #f59e0b"
-            }}>
-              <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#92400e", fontWeight: "bold" }}>
-                🔧 Credenciales de prueba:
-              </p>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={fillSuperAdminCredentials}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    backgroundColor: "#dc2626",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  👑 Super Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={fillCompanyAdminCredentials}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    backgroundColor: "#3b82f6",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  🏢 Admin Empresa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginData({ email: "", password: "" })}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    backgroundColor: "#6b7280",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: "pointer"
-                  }}
-                >
-                  🧹 Limpiar
-                </button>
-              </div>
-              <div style={{ fontSize: "11px", color: "#92400e", marginTop: "6px" }}>
-                <div>👑 Super Admin: Ve todas las empresas | 🏢 Admin Empresa: Solo su empresa</div>
-              </div>
-            </div>
-
             {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
 
             <div className="input-group">

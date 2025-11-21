@@ -2,7 +2,7 @@
 
 export const API_CONFIG = {
   // Base URL para llamadas API
-  BASE_URL: import.meta.env.VITE_API_URL ?? "http://18.116.21.77:8000",
+  BASE_URL: import.meta.env.VITE_API_URL ?? "http://localhost:8000",
   // Modo de API: 'mock' o 'api'
   MODE: import.meta.env.VITE_API_MODE ?? "mock",
   // Esquema de autenticación

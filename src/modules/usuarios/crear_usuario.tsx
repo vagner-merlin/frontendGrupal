@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUser, listPermissions } from './service';
+import { createUserWithImage, listPermissions } from './service';
 import { listGroups } from '../grupos/service';
 import type { CreateUserPayload } from './types';
 import type { Group } from '../grupos/types';
@@ -34,6 +34,10 @@ export default function CrearUsuario() {
     empresa_id: 0,
     imagen_url: '',
   });
+
+  // Estado para la imagen
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
+  const [imagenPreview, setImagenPreview] = useState<string>('');
 
   // Estado de validación
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -83,6 +87,19 @@ export default function CrearUsuario() {
     // Limpiar error del campo
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImagenFile(file);
+      // Crear preview de la imagen
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagenPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -136,9 +153,9 @@ export default function CrearUsuario() {
 
     setLoading(true);
     try {
-      // HU5: Crear usuario
+      // HU5: Crear usuario con imagen
       console.log('📤 Creando usuario...');
-      const response = await createUser(formData);
+      const response = await createUserWithImage(formData, imagenFile || undefined);
       console.log('✅ Respuesta del backend:', response);
       
       // Extraer el ID del usuario creado
@@ -249,88 +266,190 @@ export default function CrearUsuario() {
           <div className="form-section">
             <h3 className="section-title">📋 Información Básica (HU5)</h3>
             
-            <div className="form-grid">
-              <div className="form-field">
-                <label htmlFor="username">Usuario *</label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  placeholder="nombre_usuario"
-                  required
-                />
-                {errors.username && <span className="error-text">{errors.username}</span>}
+            <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+              {/* Columna izquierda: Campos de texto */}
+              <div style={{ flex: '1' }}>
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <div className="form-field">
+                    <label htmlFor="username">Usuario *</label>
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      value={formData.username}
+                      onChange={handleInputChange}
+                      placeholder="nombre_usuario"
+                      required
+                    />
+                    {errors.username && <span className="error-text">{errors.username}</span>}
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="email">Email *</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="usuario@ejemplo.com"
+                      required
+                    />
+                    {errors.email && <span className="error-text">{errors.email}</span>}
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="first_name">Nombre *</label>
+                    <input
+                      id="first_name"
+                      name="first_name"
+                      type="text"
+                      value={formData.first_name}
+                      onChange={handleInputChange}
+                      placeholder="Juan"
+                      required
+                    />
+                    {errors.first_name && <span className="error-text">{errors.first_name}</span>}
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="last_name">Apellido *</label>
+                    <input
+                      id="last_name"
+                      name="last_name"
+                      type="text"
+                      value={formData.last_name}
+                      onChange={handleInputChange}
+                      placeholder="Pérez"
+                      required
+                    />
+                    {errors.last_name && <span className="error-text">{errors.last_name}</span>}
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="password">Contraseña *</label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Mínimo 8 caracteres"
+                      required
+                      minLength={8}
+                    />
+                    {errors.password && <span className="error-text">{errors.password}</span>}
+                  </div>
+                </div>
               </div>
 
-              <div className="form-field">
-                <label htmlFor="email">Email *</label>
+              {/* Columna derecha: Foto de perfil */}
+              <div style={{ 
+                width: '280px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: '15px',
+                padding: '20px',
+                background: 'rgba(99, 102, 241, 0.05)',
+                borderRadius: '12px',
+                border: '2px dashed rgba(99, 102, 241, 0.3)'
+              }}>
+                <label style={{ 
+                  fontSize: '14px', 
+                  fontWeight: '600', 
+                  color: '#e2e8f0',
+                  textAlign: 'center'
+                }}>
+                  📷 Foto de Perfil (opcional)
+                </label>
+                
+                {imagenPreview ? (
+                  <div style={{ textAlign: 'center' }}>
+                    <img 
+                      src={imagenPreview} 
+                      alt="Preview" 
+                      style={{ 
+                        width: '150px', 
+                        height: '150px', 
+                        objectFit: 'cover', 
+                        borderRadius: '50%',
+                        border: '4px solid #6366f1',
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+                      }} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagenFile(null);
+                        setImagenPreview('');
+                      }}
+                      style={{
+                        marginTop: '10px',
+                        padding: '8px 16px',
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      🗑️ Eliminar
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '150px',
+                    height: '150px',
+                    borderRadius: '50%',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '3px dashed rgba(99, 102, 241, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '48px'
+                  }}>
+                    👤
+                  </div>
+                )}
+                
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="usuario@ejemplo.com"
-                  required
+                  id="imagen_perfil"
+                  name="imagen_perfil"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImagenChange}
+                  style={{ display: 'none' }}
                 />
-                {errors.email && <span className="error-text">{errors.email}</span>}
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="first_name">Nombre *</label>
-                <input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  placeholder="Juan"
-                  required
-                />
-                {errors.first_name && <span className="error-text">{errors.first_name}</span>}
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="last_name">Apellido *</label>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  placeholder="Pérez"
-                  required
-                />
-                {errors.last_name && <span className="error-text">{errors.last_name}</span>}
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="password">Contraseña *</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                  minLength={8}
-                />
-                {errors.password && <span className="error-text">{errors.password}</span>}
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="imagen_url">URL Imagen (opcional)</label>
-                <input
-                  id="imagen_url"
-                  name="imagen_url"
-                  type="url"
-                  value={formData.imagen_url}
-                  onChange={handleInputChange}
-                  placeholder="https://ejemplo.com/avatar.jpg"
-                />
+                <label 
+                  htmlFor="imagen_perfil"
+                  style={{
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    transition: 'transform 0.2s',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  {imagenPreview ? '🔄 Cambiar Imagen' : '📤 Subir Imagen'}
+                </label>
+                <p style={{ 
+                  fontSize: '11px', 
+                  color: '#94a3b8', 
+                  textAlign: 'center',
+                  margin: 0
+                }}>
+                  JPG, PNG o GIF<br/>Máx. 5MB
+                </p>
               </div>
             </div>
           </div>

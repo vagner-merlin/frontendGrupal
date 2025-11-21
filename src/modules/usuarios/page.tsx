@@ -512,9 +512,9 @@ const UsersPage: React.FC = () => {
         backPath="/app"
         actions={
           canCreateUser() ? (
-            <button 
-              className="ui-btn ui-btn--primary"
-              onClick={() => navigate("/app/crear-usuario")}
+            <button
+              className="ui-button ui-button--primary"
+              onClick={() => navigate("/app/usuarios/crear")}
             >
               + Crear Usuario
             </button>

@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useCliente } from '../context/useCliente';
-import { createDomicilio } from '../domicilios/service';
+import { createDomicilioWithFile } from '../domicilios/service';
 import '../../../styles/theme.css';
 
 const CrearDomicilioStep: React.FC = () => {
   const { clienteId, setPasoActual, marcarPasoCompletado, clienteData } = useCliente();
   const [form, setForm] = useState({
     descripcion: '',
-    croquis_url: '',
     es_propietario: 'true',
     numero_ref: ''
   });
+  const [croquisFile, setCroquisFile] = useState<File | null>(null);
+  const [croquisPreview, setCroquisPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -18,6 +19,15 @@ const CrearDomicilioStep: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCroquisFile(file);
+      setCroquisPreview(file.name);
+      setError('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,14 +40,13 @@ const CrearDomicilioStep: React.FC = () => {
       return;
     }
 
-    if (!form.descripcion.trim() || !form.croquis_url.trim() || !form.numero_ref.trim()) {
+    if (!form.descripcion.trim() || !form.numero_ref.trim()) {
       setError('Todos los campos son requeridos');
       return;
     }
 
-    // Validar formato de URL
-    if (!form.croquis_url.trim().startsWith('http://') && !form.croquis_url.trim().startsWith('https://')) {
-      setError('La URL del croquis debe comenzar con http:// o https://');
+    if (!croquisFile) {
+      setError('Debe seleccionar un archivo de croquis');
       return;
     }
 
@@ -46,14 +55,14 @@ const CrearDomicilioStep: React.FC = () => {
     try {
       const payload = {
         descripcion: form.descripcion.trim(),
-        croquis_url: form.croquis_url.trim(),
+        croquis_url: '',
         es_propietario: form.es_propietario === 'true',
         numero_ref: form.numero_ref.trim(),
         id_cliente: clienteId
       };
 
-      console.log('📤 Enviando domicilio:', payload);
-      const resultado = await createDomicilio(payload);
+      console.log('📤 Enviando domicilio con archivo:', croquisFile.name);
+      const resultado = await createDomicilioWithFile(payload, croquisFile);
       console.log('✅ Domicilio creado:', resultado);
 
       setSuccess('✅ Domicilio registrado exitosamente');
@@ -179,19 +188,46 @@ const CrearDomicilioStep: React.FC = () => {
             <label className="ui-label">
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>🗺️</span>
-                <span>URL del Croquis/Mapa *</span>
+                <span>Croquis/Mapa del Domicilio *</span>
               </span>
             </label>
             <input
-              type="url"
-              name="croquis_url"
-              className="ui-input"
-              placeholder="https://storage.ejemplo.com/croquis/domicilio-123.jpg"
-              value={form.croquis_url}
-              onChange={handleChange}
+              type="file"
+              id="croquis_file"
+              onChange={handleFileChange}
               disabled={loading}
-              required
+              accept=".pdf,.jpg,.jpeg,.png"
+              style={{ display: 'none' }}
             />
+            <label
+              htmlFor="croquis_file"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                border: '2px dashed var(--ui-border)',
+                borderRadius: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                backgroundColor: 'var(--ui-bg-secondary)',
+                transition: 'all 0.2s',
+                minHeight: '100px'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.borderColor = 'var(--ui-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--ui-border)';
+              }}
+            >
+              <span style={{ fontSize: '32px', marginBottom: '8px' }}>
+                {croquisPreview ? '🗺️' : '📤'}
+              </span>
+              <span style={{ color: 'var(--ui-text-secondary)', textAlign: 'center' }}>
+                {croquisPreview || 'Clic para seleccionar croquis (PDF, JPG, PNG)'}
+              </span>
+            </label>
           </div>
 
           <div>

@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Proxy para evitar CORS en desarrollo: /api/* -> http://127.0.0.1:8000/api/*
+      // Proxy para evitar CORS en desarrollo: /api/* -> localhost
       "/api": {
-        target: "http://127.0.0.1:8000",
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
         // no rewrite necesario si el backend usa /api/ rutas

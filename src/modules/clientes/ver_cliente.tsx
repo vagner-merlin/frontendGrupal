@@ -8,14 +8,14 @@ import "../../styles/theme.css";
 // Importar servicios de documentación, trabajo y domicilio
 import { 
   getDocumentacionByCliente, 
-  createDocumentacion, 
+  createDocumentacionWithFile, 
   deleteDocumentacion 
 } from "./documentacion/service";
 import type { Documentacion, CreateDocumentacionInput } from "./documentacion/types";
 
 import { 
   getTrabajosByCliente, 
-  createTrabajo, 
+  createTrabajoWithFile, 
   updateTrabajo, 
   deleteTrabajo 
 } from "./trabajo/service";
@@ -23,7 +23,7 @@ import type { Trabajo, CreateTrabajoInput, UpdateTrabajoInput } from "./trabajo/
 
 import { 
   getDomiciliosByCliente, 
-  createDomicilio, 
+  createDomicilioWithFile, 
   updateDomicilio, 
   deleteDomicilio 
 } from "./domicilios/service";
@@ -107,7 +107,9 @@ const VerClientePage: React.FC = () => {
   const [documentos, setDocumentos] = useState<Documentacion[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [showDocForm, setShowDocForm] = useState(false);
-  const [docForm, setDocForm] = useState({ ci: "", documento_url: "" });
+  const [docForm, setDocForm] = useState({ ci: "" });
+  const [documentoFile, setDocumentoFile] = useState<File | null>(null);
+  const [documentoPreview, setDocumentoPreview] = useState("");
   
   // Estados para trabajo (HU14)
   const [trabajos, setTrabajos] = useState<Trabajo[]>([]);
@@ -119,9 +121,10 @@ const VerClientePage: React.FC = () => {
     empresa: "",
     salario: "",
     ubicacion: "",
-    descripcion: "",
-    extracto_url: ""
+    descripcion: ""
   });
+  const [extractoFile, setExtractoFile] = useState<File | null>(null);
+  const [extractoPreview, setExtractoPreview] = useState("");
   
   // Estados para domicilio (HU15)
   const [domicilios, setDomicilios] = useState<Domicilio[]>([]);
@@ -131,9 +134,10 @@ const VerClientePage: React.FC = () => {
   const [addressForm, setAddressForm] = useState({
     descripcion: "",
     es_propietario: true,
-    numero_ref: "",
-    croquis_url: ""
+    numero_ref: ""
   });
+  const [croquisFile, setCroquisFile] = useState<File | null>(null);
+  const [croquisPreview, setCroquisPreview] = useState("");
   
   // Notificaciones
   const [notification, setNotification] = useState<{type: "success" | "error", message: string} | null>(null);
@@ -258,8 +262,8 @@ const VerClientePage: React.FC = () => {
       return;
     }
     
-    if (!docForm.documento_url.trim()) {
-      showNotification("error", "❌ La URL del documento es requerida");
+    if (!documentoFile) {
+      showNotification("error", "❌ Debe seleccionar un archivo de documento");
       return;
     }
 
@@ -267,16 +271,19 @@ const VerClientePage: React.FC = () => {
       console.log("✨ Creando documento para cliente ID:", id);
       const input: CreateDocumentacionInput = {
         ci: docForm.ci.trim(),
-        documento_url: docForm.documento_url.trim(),
+        documento_url: "",
         id_cliente: parseInt(id)
       };
       console.log("📝 Datos del documento:", input);
+      console.log("📄 Archivo:", documentoFile.name);
       
-      const nuevoDoc = await createDocumentacion(input);
+      const nuevoDoc = await createDocumentacionWithFile(input, documentoFile);
       console.log("✅ Documento creado:", nuevoDoc);
       
       showNotification("success", "✅ Documento agregado exitosamente");
-      setDocForm({ ci: "", documento_url: "" });
+      setDocForm({ ci: "" });
+      setDocumentoFile(null);
+      setDocumentoPreview("");
       setShowDocForm(false);
       
       // Actualizar la lista local inmediatamente sin hacer GET
@@ -288,12 +295,11 @@ const VerClientePage: React.FC = () => {
       }, 1000);
     } catch (err) {
       console.error("❌ Error creando documento:", err);
-      const error = err as { response?: { data?: { detail?: string; message?: string; ci?: string[]; documento_url?: string[] }; }; message?: string };
+      const error = err as { response?: { data?: { detail?: string; message?: string; ci?: string[] }; }; message?: string };
       console.error("❌ Respuesta completa del error:", error?.response);
       const errorMsg = error?.response?.data?.detail || 
                       error?.response?.data?.message ||
                       error?.response?.data?.ci?.[0] ||
-                      error?.response?.data?.documento_url?.[0] ||
                       error?.message || 
                       "Error al agregar documento";
       showNotification("error", `❌ ${errorMsg}`);
@@ -364,8 +370,8 @@ const VerClientePage: React.FC = () => {
       showNotification("error", "❌ La empresa es requerida");
       return;
     }
-    if (!workForm.extracto_url.trim()) {
-      showNotification("error", "❌ La URL del extracto bancario es requerida");
+    if (!extractoFile) {
+      showNotification("error", "❌ Debe seleccionar el extracto bancario");
       return;
     }
     if (!workForm.salario || parseFloat(workForm.salario) <= 0) {
@@ -389,12 +395,13 @@ const VerClientePage: React.FC = () => {
         salario: parseFloat(workForm.salario),
         ubicacion: workForm.ubicacion.trim(),
         descripcion: workForm.descripcion.trim(),
-        extracto_url: workForm.extracto_url.trim(),
+        extracto_url: "",
         id_cliente: parseInt(id)
       };
       console.log("📝 Datos del trabajo:", input);
+      console.log("📄 Extracto:", extractoFile.name);
       
-      const nuevoTrabajo = await createTrabajo(input);
+      const nuevoTrabajo = await createTrabajoWithFile(input, extractoFile);
       console.log("✅ Trabajo creado:", nuevoTrabajo);
       
       showNotification("success", "✅ Información laboral agregada");
@@ -426,8 +433,8 @@ const VerClientePage: React.FC = () => {
         empresa: workForm.empresa,
         salario: parseFloat(workForm.salario),
         ubicacion: workForm.ubicacion || undefined,
-        descripcion: workForm.descripcion || undefined,
-        extracto_url: workForm.extracto_url || undefined
+        descripcion: workForm.descripcion || undefined
+        // No actualizamos extracto_url en edición
       };
       await updateTrabajo(editingWork.id, input);
       showNotification("success", "✅ Información laboral actualizada");
@@ -471,9 +478,9 @@ const VerClientePage: React.FC = () => {
       empresa: work.empresa,
       salario: String(work.salario),
       ubicacion: work.ubicacion || "",
-      descripcion: work.descripcion || "",
-      extracto_url: work.extracto_url || ""
+      descripcion: work.descripcion || ""
     });
+    // No cargamos el archivo porque no se puede editar
     setShowWorkForm(true);
   };
 
@@ -483,9 +490,10 @@ const VerClientePage: React.FC = () => {
       empresa: "",
       salario: "",
       ubicacion: "",
-      descripcion: "",
-      extracto_url: ""
+      descripcion: ""
     });
+    setExtractoFile(null);
+    setExtractoPreview("");
     setEditingWork(null);
     setShowWorkForm(false);
   };
@@ -525,8 +533,8 @@ const VerClientePage: React.FC = () => {
       showNotification("error", "❌ La descripción de la dirección es requerida");
       return;
     }
-    if (!addressForm.croquis_url.trim()) {
-      showNotification("error", "❌ La URL del croquis es requerida");
+    if (!croquisFile) {
+      showNotification("error", "❌ Debe seleccionar el archivo del croquis");
       return;
     }
     if (!addressForm.numero_ref.trim()) {
@@ -540,12 +548,13 @@ const VerClientePage: React.FC = () => {
         descripcion: addressForm.descripcion.trim(),
         es_propietario: addressForm.es_propietario,
         numero_ref: addressForm.numero_ref.trim(),
-        croquis_url: addressForm.croquis_url.trim(),
+        croquis_url: "",
         id_cliente: parseInt(id)
       };
       console.log("📝 Datos del domicilio:", input);
+      console.log("🗺️ Croquis:", croquisFile.name);
       
-      const nuevoDomicilio = await createDomicilio(input);
+      const nuevoDomicilio = await createDomicilioWithFile(input, croquisFile);
       console.log("✅ Domicilio creado:", nuevoDomicilio);
       
       // Actualización optimista: agregar directamente al estado
@@ -555,12 +564,11 @@ const VerClientePage: React.FC = () => {
       resetAddressForm();
     } catch (err) {
       console.error("❌ Error creando domicilio:", err);
-      const error = err as { response?: { data?: { detail?: string; message?: string; descripcion?: string[]; croquis_url?: string[]; numero_ref?: string[] }; }; message?: string };
+      const error = err as { response?: { data?: { detail?: string; message?: string; descripcion?: string[]; numero_ref?: string[] }; }; message?: string };
       console.error("❌ Respuesta completa del error:", error?.response);
       const errorMsg = error?.response?.data?.detail || 
                       error?.response?.data?.message ||
                       error?.response?.data?.descripcion?.[0] ||
-                      error?.response?.data?.croquis_url?.[0] ||
                       error?.response?.data?.numero_ref?.[0] ||
                       error?.message || 
                       "Error al agregar domicilio";
@@ -576,8 +584,8 @@ const VerClientePage: React.FC = () => {
       const input: UpdateDomicilioInput = {
         descripcion: addressForm.descripcion,
         es_propietario: addressForm.es_propietario,
-        numero_ref: addressForm.numero_ref || undefined,
-        croquis_url: addressForm.croquis_url || undefined
+        numero_ref: addressForm.numero_ref || undefined
+        // No actualizamos croquis_url en edición
       };
       await updateDomicilio(editingAddress.id, input);
       
@@ -617,9 +625,9 @@ const VerClientePage: React.FC = () => {
     setAddressForm({
       descripcion: address.descripcion,
       es_propietario: address.es_propietario,
-      numero_ref: address.numero_ref || "",
-      croquis_url: address.croquis_url || ""
+      numero_ref: address.numero_ref || ""
     });
+    // No cargamos el archivo porque no se puede editar
     setShowAddressForm(true);
   };
 
@@ -627,9 +635,10 @@ const VerClientePage: React.FC = () => {
     setAddressForm({
       descripcion: "",
       es_propietario: true,
-      numero_ref: "",
-      croquis_url: ""
+      numero_ref: ""
     });
+    setCroquisFile(null);
+    setCroquisPreview("");
     setEditingAddress(null);
     setShowAddressForm(false);
   };
@@ -948,22 +957,50 @@ const VerClientePage: React.FC = () => {
                   </div>
                   <div>
                     <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
-                      URL del Documento <span style={{ color: "red" }}>*</span>
+                      Documento (PDF o Imagen) <span style={{ color: "red" }}>*</span>
                     </label>
                     <input
-                      type="url"
-                      value={docForm.documento_url}
-                      onChange={(e) => setDocForm({ ...docForm, documento_url: e.target.value })}
-                      placeholder="https://ejemplo.com/documento.pdf"
-                      required
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        borderRadius: "8px",
-                        border: "1px solid #d1d5db",
-                        fontSize: "16px"
+                      type="file"
+                      id="documento_file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setDocumentoFile(file);
+                          setDocumentoPreview(file.name);
+                        }
                       }}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: "none" }}
                     />
+                    <label
+                      htmlFor="documento_file"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "16px",
+                        border: "2px dashed #d1d5db",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        backgroundColor: "#f9fafb",
+                        transition: "all 0.2s",
+                        minHeight: "60px"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#667eea";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#d1d5db";
+                      }}
+                    >
+                      <span style={{ fontSize: "24px", marginBottom: "4px" }}>
+                        {documentoPreview ? "📄" : "📤"}
+                      </span>
+                      <span style={{ color: "#6b7280", fontSize: "14px", textAlign: "center" }}>
+                        {documentoPreview || "Clic para seleccionar documento"}
+                      </span>
+                    </label>
                   </div>
                 </div>
                 <button type="submit" className="ui-btn ui-btn--primary">
@@ -1006,22 +1043,57 @@ const VerClientePage: React.FC = () => {
                     e.currentTarget.style.boxShadow = "none";
                     e.currentTarget.style.borderColor = "#e5e7eb";
                   }}>
-                    <div>
-                      <div style={{ fontWeight: "600", fontSize: "16px", marginBottom: "4px" }}>
-                        🆔 CI: {doc.ci}
-                      </div>
+                    <div style={{ display: "flex", gap: "16px", alignItems: "center", flex: 1 }}>
                       {doc.documento_url && (
-                        <a 
-                          href={doc.documento_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          style={{ color: "#667eea", fontSize: "14px" }}
-                        >
-                          🔗 Ver documento
-                        </a>
+                        <div style={{ flexShrink: 0 }}>
+                          {doc.documento_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                            <img 
+                              src={doc.documento_url} 
+                              alt="Documento"
+                              style={{ 
+                                width: "80px", 
+                                height: "80px", 
+                                objectFit: "cover", 
+                                borderRadius: "8px",
+                                border: "2px solid #e5e7eb"
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: "80px",
+                              height: "80px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: "#f3f4f6",
+                              borderRadius: "8px",
+                              border: "2px solid #e5e7eb",
+                              fontSize: "32px"
+                            }}>
+                              📄
+                            </div>
+                          )}
+                        </div>
                       )}
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
-                        📅 Registrado: {new Date(doc.fecha_registro).toLocaleDateString('es-ES')}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: "600", fontSize: "16px", marginBottom: "4px" }}>
+                          🆔 CI: {doc.ci}
+                        </div>
+                        {doc.documento_url && (
+                          <a 
+                            href={doc.documento_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ color: "#667eea", fontSize: "14px", textDecoration: "none" }}
+                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = "underline"}
+                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = "none"}
+                          >
+                            📥 Descargar documento
+                          </a>
+                        )}
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
+                          📅 Registrado: {new Date(doc.fecha_registro).toLocaleDateString('es-ES')}
+                        </div>
                       </div>
                     </div>
                     <button
@@ -1172,21 +1244,49 @@ const VerClientePage: React.FC = () => {
                   </div>
                   <div style={{ gridColumn: "1 / -1" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
-                      URL Extracto Bancario
+                      Extracto Bancario (PDF o Imagen) <span style={{ color: "red" }}>*</span>
                     </label>
                     <input
-                      type="url"
-                      value={workForm.extracto_url}
-                      onChange={(e) => setWorkForm({ ...workForm, extracto_url: e.target.value })}
-                      placeholder="https://ejemplo.com/extracto.pdf"
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        borderRadius: "8px",
-                        border: "1px solid #d1d5db",
-                        fontSize: "16px"
+                      type="file"
+                      id="extracto_file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setExtractoFile(file);
+                          setExtractoPreview(file.name);
+                        }
                       }}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: "none" }}
                     />
+                    <label
+                      htmlFor="extracto_file"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "20px",
+                        border: "2px dashed #d1d5db",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        backgroundColor: "#f9fafb",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#667eea";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#d1d5db";
+                      }}
+                    >
+                      <span style={{ fontSize: "32px", marginBottom: "8px" }}>
+                        {extractoPreview ? "📄" : "📤"}
+                      </span>
+                      <span style={{ color: "#6b7280", textAlign: "center" }}>
+                        {extractoPreview || "Clic para seleccionar extracto bancario"}
+                      </span>
+                    </label>
                   </div>
                 </div>
                 <button type="submit" className="ui-btn ui-btn--primary">
@@ -1249,14 +1349,45 @@ const VerClientePage: React.FC = () => {
                       </p>
                     )}
                     {trabajo.extracto_url && (
-                      <a 
-                        href={trabajo.extracto_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{ color: "#667eea", fontSize: "14px", marginTop: "8px", display: "inline-block" }}
-                      >
-                        📄 Ver extracto bancario
-                      </a>
+                      <div style={{ marginTop: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
+                        {trabajo.extracto_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                          <img 
+                            src={trabajo.extracto_url} 
+                            alt="Extracto bancario"
+                            style={{ 
+                              width: "100px", 
+                              height: "100px", 
+                              objectFit: "cover", 
+                              borderRadius: "8px",
+                              border: "2px solid #e5e7eb"
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: "100px",
+                            height: "100px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#f3f4f6",
+                            borderRadius: "8px",
+                            border: "2px solid #e5e7eb",
+                            fontSize: "40px"
+                          }}>
+                            📄
+                          </div>
+                        )}
+                        <a 
+                          href={trabajo.extracto_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ color: "#667eea", fontSize: "14px", textDecoration: "none" }}
+                          onMouseEnter={(e) => e.currentTarget.style.textDecoration = "underline"}
+                          onMouseLeave={(e) => e.currentTarget.style.textDecoration = "none"}
+                        >
+                          📥 Descargar extracto bancario
+                        </a>
+                      </div>
                     )}
                     <div style={{ marginTop: "16px", display: "flex", gap: "8px" }}>
                       <button
@@ -1379,21 +1510,49 @@ const VerClientePage: React.FC = () => {
                   </div>
                   <div>
                     <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
-                      URL del Croquis
+                      Croquis/Mapa (Imagen o PDF) <span style={{ color: "red" }}>*</span>
                     </label>
                     <input
-                      type="url"
-                      value={addressForm.croquis_url}
-                      onChange={(e) => setAddressForm({ ...addressForm, croquis_url: e.target.value })}
-                      placeholder="https://ejemplo.com/croquis.jpg"
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        borderRadius: "8px",
-                        border: "1px solid #d1d5db",
-                        fontSize: "16px"
+                      type="file"
+                      id="croquis_file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCroquisFile(file);
+                          setCroquisPreview(file.name);
+                        }
                       }}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: "none" }}
                     />
+                    <label
+                      htmlFor="croquis_file"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "20px",
+                        border: "2px dashed #d1d5db",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        backgroundColor: "#f9fafb",
+                        transition: "all 0.2s"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#667eea";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "#d1d5db";
+                      }}
+                    >
+                      <span style={{ fontSize: "32px", marginBottom: "8px" }}>
+                        {croquisPreview ? "🗺️" : "📤"}
+                      </span>
+                      <span style={{ color: "#6b7280", textAlign: "center" }}>
+                        {croquisPreview || "Clic para seleccionar croquis"}
+                      </span>
+                    </label>
                   </div>
                 </div>
                 <button type="submit" className="ui-btn ui-btn--primary">
@@ -1462,14 +1621,45 @@ const VerClientePage: React.FC = () => {
                         </p>
                       )}
                       {domicilio.croquis_url && (
-                        <a 
-                          href={domicilio.croquis_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          style={{ color: "#667eea", fontSize: "14px", marginTop: "8px", display: "inline-block" }}
-                        >
-                          🗺️ Ver croquis
-                        </a>
+                        <div style={{ marginTop: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
+                          {domicilio.croquis_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                            <img 
+                              src={domicilio.croquis_url} 
+                              alt="Croquis"
+                              style={{ 
+                                width: "150px", 
+                                height: "150px", 
+                                objectFit: "cover", 
+                                borderRadius: "8px",
+                                border: "2px solid #e5e7eb"
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: "150px",
+                              height: "150px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: "#f3f4f6",
+                              borderRadius: "8px",
+                              border: "2px solid #e5e7eb",
+                              fontSize: "48px"
+                            }}>
+                              🗺️
+                            </div>
+                          )}
+                          <a 
+                            href={domicilio.croquis_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ color: "#667eea", fontSize: "14px", textDecoration: "none" }}
+                            onMouseEnter={(e) => e.currentTarget.style.textDecoration = "underline"}
+                            onMouseLeave={(e) => e.currentTarget.style.textDecoration = "none"}
+                          >
+                            📥 Descargar croquis
+                          </a>
+                        </div>
                       )}
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>

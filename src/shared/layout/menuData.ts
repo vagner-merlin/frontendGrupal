@@ -90,7 +90,8 @@ export function getMenuForUser(user: AuthUser | null): MenuItem[] {
       children: [
         { path: "/app/usuarios", label: "Historial", icon: "📋", exact: true },
         { path: "/app/usuarios/crear", label: "Crear usuario", icon: "➕", roles: ["admin", "superadmin"] },
-        { path: "/app/usuarios/roles", label: "Gestión de roles", icon: "🔐", roles: ["admin", "superadmin"] },
+        { path: "/app/grupos", label: "Gestión de grupos", icon: "🔐", roles: ["admin", "superadmin"] },
+        { path: "/app/usuarios/roles", label: "Gestión de roles", icon: "🛠️", roles: ["admin", "superadmin"] },
       ],
     },
 
