@@ -1,13 +1,15 @@
 import axios from 'axios';
 import { API_CONFIG } from '@/config/api.config';
 
+// En desarrollo usamos el proxy de Vite (baseURL vacío). En producción
+// utilizamos la URL absoluta definida en `VITE_API_BASE_URL`.
 const axiosInstance = axios.create({
-  baseURL: API_CONFIG.baseURL,
+  baseURL: import.meta.env.DEV ? '' : API_CONFIG.baseURL,
   timeout: API_CONFIG.timeout,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Cambiar a true para credenciales
+  withCredentials: false, // No usamos cookies para auth; usamos token en headers
 });
 
 // Interceptor para agregar el token en cada petición
