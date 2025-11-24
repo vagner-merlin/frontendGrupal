@@ -5,7 +5,10 @@ import type { InternalAxiosRequestConfig } from "axios";
    CONFIG desde variables .env
    ============================ */
 export const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || "http://18.116.21.77:8000",
+  baseURL:
+    (import.meta.env.VITE_API_BASE_URL as string) ||
+    (import.meta.env.VITE_API_URL as string) ||
+    "http://18.116.21.77:8000",
   mode: import.meta.env.VITE_API_MODE || "hybrid",
   timeout: 10000,
   authScheme: "Token",  // Django Rest Framework usa "Token" no "Bearer"
@@ -138,7 +141,9 @@ export const getTenantId = (): string | undefined => {
 
 // NOTA: dejar baseURL vacío para usar proxy de Vite (usa rutas relativas "/api/...")
 export const http = axios.create({
-  baseURL: "", // <- ruta relativa: Vite proxy reenviará /api -> backend
+  // En desarrollo dejar vacío para usar el proxy de Vite; en producción
+  // usar la URL absoluta definida en `VITE_API_BASE_URL`.
+  baseURL: import.meta.env.DEV ? "" : API_CONFIG.baseURL,
   timeout: 30000,
   headers: {
     // NO establecer Content-Type aquí - dejar que Axios lo detecte automáticamente
